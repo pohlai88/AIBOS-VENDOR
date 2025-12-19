@@ -9,6 +9,7 @@ import { logDataAccess } from "@/lib/audit-log";
 // nodejs runtime: Required for Supabase client (Node.js library)
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 60; // 60 seconds for GDPR data export (can be large)
 
 /**
  * GET /api/gdpr/export - Export user data (GDPR right to access)

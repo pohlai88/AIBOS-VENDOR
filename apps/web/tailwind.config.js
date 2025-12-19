@@ -225,6 +225,10 @@ module.exports = {
           '50%': { transform: 'translateY(100%)' },
           '100%': { transform: 'translateY(-100%)' },
         },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'spin-slow': 'spin 20s linear infinite',
@@ -232,6 +236,7 @@ module.exports = {
         'spin-reverse': 'spin 40s linear infinite reverse',
         'ping-slow': 'ping 5s cubic-bezier(0,0,0.2,1) infinite',
         'scan': 'scan 4s ease-in-out infinite',
+        'shimmer': 'shimmer 2s infinite',
       },
     },
   },

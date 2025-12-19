@@ -3,7 +3,7 @@
  * Best practice: Generate signed URLs server-side for security
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getSignedUrl } from "@/lib/storage";
 import { logError } from "@/lib/logger";

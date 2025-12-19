@@ -6,7 +6,6 @@
  */
 
 import { createClient } from "./supabase/server";
-import type { Database } from "@/types/database";
 
 export type Tenant = {
   id: string;

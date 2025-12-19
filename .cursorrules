@@ -119,6 +119,32 @@
 4. **Design Tokens**: Always use design system tokens (colors, spacing, etc.)
 5. **Grid System**: Respect the grid structure, no floating elements
 
+## CDS Template Prohibition
+
+**CRITICAL**: CDS (Carbon Design System) template colors and design patterns are STRICTLY PROHIBITED:
+
+1. **No CDS Colors**: 
+   - **DO NOT** use any CDS-specific color tokens (e.g., `cds-*`, `carbon-*`, IBM Carbon colors)
+   - **DO NOT** import or reference CDS color palettes
+   - **ONLY** use the approved design system tokens defined in `globals.css` and `tailwind.config.js`
+
+2. **No CDS Design Patterns**:
+   - **DO NOT** use CDS component patterns or layouts
+   - **DO NOT** follow CDS spacing or typography scales
+   - **DO NOT** implement CDS-specific UI patterns (e.g., CDS data tables, CDS forms)
+
+3. **Approved Design System Only**:
+   - **USE ONLY** semantic tokens: `background`, `foreground`, `border`, `success-*`, `error-*`, `warning-*`, `info-*`, `primary-*`, `secondary-*`, `neutral-*`
+   - **USE ONLY** design tokens defined in the Figma design system
+   - **FOLLOW** the established design principles and patterns in the codebase
+
+4. **Color Usage Rules**:
+   - Backgrounds: `bg-background`, `bg-background-elevated`, `bg-background-hover`
+   - Text: `text-foreground`, `text-foreground-muted`, `text-foreground-subtle`
+   - Borders: `border-border`, `border-border-hover`, `border-border-focus`
+   - Accents: `success-500`, `error-500`, `warning-500`, `info-500`, `primary-500`
+   - **NEVER** hardcode colors or use CDS color values
+
 ## Communication Protocol
 
 1. **Be Explicit**: Clearly state what you're about to change

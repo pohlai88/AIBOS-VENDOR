@@ -66,7 +66,7 @@ export async function performAuthHealthCheck(): Promise<AuthHealthCheck> {
   try {
     // Check Supabase connection
     const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { error: userError } = await supabase.auth.getUser();
 
     if (!userError) {
       checks.supabaseConnection = true;
@@ -87,13 +87,23 @@ export async function performAuthHealthCheck(): Promise<AuthHealthCheck> {
     }
 
     // Check RLS policies (verify users table has policies)
-    const { data: policies, error: policyError } = await supabase.rpc(
-      "check_rls_policies",
-      { table_name: "users" }
-    ).catch(() => ({ data: null, error: { message: "RPC not available" } }));
+    // Try RPC first, fallback to direct query
+    let rlsCheckPassed = false;
+    try {
+      const { error: policyError } = await supabase.rpc(
+        "check_rls_policies",
+        { table_name: "users" }
+      );
+
+      if (!policyError) {
+        rlsCheckPassed = true;
+      }
+    } catch {
+      // RPC not available, try direct query
+    }
 
     // Fallback: Direct query to check policies
-    if (policyError) {
+    if (!rlsCheckPassed) {
       const { data: directCheck } = await supabase
         .from("users")
         .select("id")
@@ -101,10 +111,12 @@ export async function performAuthHealthCheck(): Promise<AuthHealthCheck> {
         .maybeSingle();
 
       // If we can query without error, RLS is likely working
-      checks.rlsPolicies = true;
-    } else {
-      checks.rlsPolicies = true;
+      if (directCheck !== null) {
+        rlsCheckPassed = true;
+      }
     }
+
+    checks.rlsPolicies = rlsCheckPassed;
 
     // Middleware check (verify session refresh works)
     const { data: { session } } = await supabase.auth.getSession();
@@ -153,34 +165,31 @@ export async function verifyRLSPolicies(
 
   try {
     // Query pg_policies to get RLS policies
-    const { data: policies, error } = await supabase.rpc(
-      "get_table_policies",
-      { table_name: tableName }
-    ).catch(() => {
-      // Fallback: Try direct query if RPC doesn't exist
-      return { data: null, error: { message: "RPC not available" } };
-    });
-
-    if (error) {
-      // Try alternative: Check if we can query the table
-      // If RLS is working, we should get results based on auth.uid()
-      const { error: queryError } = await supabase
-        .from(tableName as any)
-        .select("id")
-        .limit(1);
-
-      if (queryError && queryError.code === "42501") {
-        issues.push("RLS policies may be too restrictive");
-      } else if (queryError) {
-        issues.push(`Table query error: ${queryError.message}`);
+    // Try RPC first, fallback to empty array if not available
+    let policies: any[] = [];
+    try {
+      const { data: policyData } = await supabase.rpc(
+        "get_table_policies",
+        { table_name: tableName }
+      );
+      if (policyData) {
+        policies = policyData;
       }
+    } catch {
+      // RPC not available, return empty array
+    }
 
-      return {
-        table: tableName,
-        hasPolicies: true, // Assume policies exist if we can query
-        policies: [],
-        issues,
-      };
+    // Try alternative: Check if we can query the table
+    // If RLS is working, we should get results based on auth.uid()
+    const { error: queryError } = await supabase
+      .from(tableName as any)
+      .select("id")
+      .limit(1);
+
+    if (queryError && queryError.code === "42501") {
+      issues.push("RLS policies may be too restrictive");
+    } else if (queryError) {
+      issues.push(`Table query error: ${queryError.message}`);
     }
 
     const policyList = (policies || []).map((p: any) => ({

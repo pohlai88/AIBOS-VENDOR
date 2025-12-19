@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { validateRequest, signupSchema } from "@/lib/validation";
-import { logError } from "@/lib/logger";
 
 // Route segment config following Next.js 16 best practices
 export const dynamic = "force-dynamic";
@@ -117,7 +116,7 @@ export async function POST(request: NextRequest) {
         defaultTenant = newDefaultTenant;
       }
 
-      tenantId = defaultTenant.id;
+      tenantId = defaultTenant!.id;
     }
 
     // Create organization with tenant_id

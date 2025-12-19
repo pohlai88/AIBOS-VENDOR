@@ -78,6 +78,7 @@ async function _fetchDocumentsInternal(
   }
 
   if (search) {
+    // Use keyword search (semantic search can be added via API route)
     query = query.ilike('name', `%${search}%`)
   }
 
@@ -93,8 +94,26 @@ async function _fetchDocumentsInternal(
   const totalItems = count || 0
   const totalPages = Math.ceil(totalItems / limit)
 
+  // Map database fields to Document type
+  const mappedDocuments: Document[] = (data || []).map((doc: any) => ({
+    id: doc.id,
+    name: doc.name,
+    category: doc.category || 'other',
+    type: doc.type || 'other',
+    fileSize: doc.file_size || 0,
+    fileUrl: doc.file_url || '',
+    mimeType: doc.mime_type || 'application/octet-stream',
+    isShared: doc.is_shared || false,
+    vendorId: doc.vendor_id || null,
+    organizationId: doc.organization_id || '',
+    version: 1,
+    createdAt: doc.created_at || new Date().toISOString(),
+    updatedAt: doc.updated_at || doc.created_at || new Date().toISOString(),
+    createdBy: doc.created_by || '',
+  }))
+
   return {
-    documents: (data || []) as Document[],
+    documents: mappedDocuments,
     pagination: {
       currentPage: page,
       totalPages,
@@ -228,11 +247,32 @@ export const getDashboardStats = cache(async () => {
             .eq('organization_id', user.organizationId),
         ])
 
+      // Calculate payments total
+      const { data: paymentsData } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('tenant_id', user.tenantId)
+        .eq('organization_id', user.organizationId)
+
+      const paymentsTotal = paymentsData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0
+
+      // Count unread messages (use messagesResult from parallel fetch)
+      const unreadCount = messagesResult.count || 0
+
       return {
-        documents: documentsResult.count || 0,
-        payments: paymentsResult.count || 0,
-        statements: statementsResult.count || 0,
-        messages: messagesResult.count || 0,
+        documents: {
+          count: documentsResult.count || 0,
+        },
+        payments: {
+          count: paymentsResult.count || 0,
+          total: paymentsTotal,
+        },
+        statements: {
+          count: statementsResult.count || 0,
+        },
+        messages: {
+          unread: unreadCount || 0,
+        },
       }
     },
     [cacheKey],

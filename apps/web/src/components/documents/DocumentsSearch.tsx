@@ -13,6 +13,7 @@ export function DocumentsSearch() {
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "created_at");
   const [sortOrder, setSortOrder] = useState(searchParams.get("sortOrder") || "desc");
+  const [useSemantic, setUseSemantic] = useState(searchParams.get("semantic") === "true");
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -64,6 +65,15 @@ export function DocumentsSearch() {
       const newSortOrder = e.target.value;
       setSortOrder(newSortOrder);
       updateSearchParams("sortOrder", newSortOrder);
+    },
+    [updateSearchParams]
+  );
+
+  const handleSemanticToggle = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.checked;
+      setUseSemantic(newValue);
+      updateSearchParams("semantic", newValue ? "true" : "");
     },
     [updateSearchParams]
   );
@@ -126,6 +136,20 @@ export function DocumentsSearch() {
         <option value="desc">Descending</option>
         <option value="asc">Ascending</option>
       </select>
+
+      {/* Semantic Search Toggle (only show when search query exists) */}
+      {search && (
+        <label className="flex items-center gap-2 px-4 py-2 bg-background-elevated border border-border rounded-lg cursor-pointer hover:bg-background-hover transition-colors">
+          <input
+            type="checkbox"
+            checked={useSemantic}
+            onChange={handleSemanticToggle}
+            aria-label="Enable semantic search"
+            className="w-4 h-4 text-primary-500 rounded focus:ring-2 focus:ring-primary-500"
+          />
+          <span className="text-sm text-foreground">AI Search</span>
+        </label>
+      )}
     </div>
   );
 }

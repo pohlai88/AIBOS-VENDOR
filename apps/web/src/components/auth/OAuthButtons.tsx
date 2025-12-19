@@ -8,7 +8,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signInWithOAuth, type OAuthProvider } from "@/lib/auth/oauth";
 import { Button } from "@aibos/ui";
 
@@ -26,7 +25,6 @@ export function OAuthButtons({
   redirectTo = "/dashboard",
   providers = ["google", "github"]
 }: OAuthButtonsProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

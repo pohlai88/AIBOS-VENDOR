@@ -3,7 +3,7 @@ import { createClient } from "./supabase/server";
 export async function logDocumentAccess(
   documentId: string,
   userId: string,
-  action: "view" | "download" | "upload" | "delete"
+  action: "view" | "download" | "upload" | "delete" | "update"
 ) {
   const supabase = await createClient();
 

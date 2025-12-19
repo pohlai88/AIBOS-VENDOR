@@ -8,6 +8,7 @@ import { logError } from "@/lib/logger";
 // nodejs runtime: Required for Supabase client (Node.js library)
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 300; // 5 minutes for retention cleanup (long-running operation)
 
 /**
  * POST /api/admin/retention - Run retention cleanup (admin only)

@@ -7,6 +7,7 @@ import { requireAuth } from "@/lib/auth";
 // nodejs runtime: Required for Supabase client (Node.js library)
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 30; // 30 seconds for CSV export generation
 
 export async function GET(request: NextRequest) {
   try {

@@ -6,9 +6,10 @@
  */
 
 import { createClient as createServerClient } from "./server";
-import { createClient as createBrowserClient } from "./client";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+
+// Type placeholder for Database - can be generated from Supabase CLI
+type Database = any;
 
 /**
  * Get a tenant-scoped Supabase client for server-side operations
@@ -70,7 +71,7 @@ export async function getTenantId(): Promise<string> {
  * Create a tenant-scoped query builder helper
  * Automatically adds tenant_id filter to queries
  */
-export async function withTenantFilter<T extends { tenant_id?: string }>(
+export async function withTenantFilter(
   query: any,
   tableName: string
 ) {

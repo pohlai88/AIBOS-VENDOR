@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo, lazy, Suspense } from "react";
 import { Card, Button, Modal, Input, Select } from "@aibos/ui";
 import type { MessageThread } from "@aibos/shared";
 import { formatDateTime } from "@aibos/shared";
 import { createClient } from "@/lib/supabase/client";
-import { MessageThread as MessageThreadComponent } from "./MessageThread";
 import type { MessagesResponse } from "@/types/api";
+
+// Lazy load MessageThread component for code splitting
+const MessageThreadComponent = lazy(() => import("./MessageThread").then((mod) => ({ default: mod.MessageThread })));
 
 interface Vendor {
   id: string;
@@ -26,6 +28,9 @@ export const MessagesListClient = memo(function MessagesListClient({
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({ vendorId: "", subject: "" });
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [, setConnectionStatus] = useState<"connected" | "disconnected" | "error">("disconnected");
 
   const fetchThreads = useCallback(async () => {
     const response = await fetch("/api/messages");
@@ -35,30 +40,68 @@ export const MessagesListClient = memo(function MessagesListClient({
     }
   }, []);
 
+  // Fetch current user context
   useEffect(() => {
+    const fetchUserContext = async () => {
+      const supabase = createClient();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        setCurrentUserId(authUser.id);
+        const { data: user } = await supabase
+          .from("users")
+          .select("organization_id")
+          .eq("id", authUser.id)
+          .single();
+        if (user) {
+          setOrganizationId(user.organization_id);
+        }
+      }
+    };
+    fetchUserContext();
+  }, []);
+
+  useEffect(() => {
+    if (!organizationId) return;
+
     const supabase = createClient();
 
-    // Subscribe to message_threads changes
+    // ✅ Subscribe to message_threads changes with filtering and private channel
     const channel = supabase
-      .channel("message_threads")
+      .channel(`user:${currentUserId}:threads`, {
+        config: { private: true } // ✅ Private channel with RLS
+      })
       .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "message_threads",
-        },
+        "broadcast",
+        { event: "thread_updated" },
         () => {
           // Refresh threads
           fetchThreads();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        // ✅ Handle subscription status
+        if (status === "SUBSCRIBED") {
+          setConnectionStatus("connected");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setConnectionStatus("error");
+          console.error("Failed to subscribe to message threads:", status);
+          // Could implement retry logic here
+        } else if (status === "CLOSED") {
+          setConnectionStatus("disconnected");
+        }
+      });
+
+    // Fetch on tab focus (reliability pattern)
+    const handleFocus = () => {
+      fetchThreads();
+    };
+    window.addEventListener("focus", handleFocus);
 
     return () => {
+      window.removeEventListener("focus", handleFocus);
       supabase.removeChannel(channel);
     };
-  }, [fetchThreads]);
+  }, [fetchThreads, organizationId, currentUserId]);
 
   const handleSelectThread = useCallback((threadId: string) => {
     setSelectedThreadId(threadId);
@@ -229,13 +272,15 @@ export const MessagesListClient = memo(function MessagesListClient({
 
         <div className="lg:col-span-2">
           {selectedThreadId ? (
-            <MessageThreadComponent
-              threadId={selectedThreadId}
-              onClose={handleCloseThread}
-            />
+            <Suspense fallback={<Card><div className="p-4 text-foreground-muted font-brand font-normal">Loading conversation...</div></Card>}>
+              <MessageThreadComponent
+                threadId={selectedThreadId}
+                onClose={handleCloseThread}
+              />
+            </Suspense>
           ) : (
             <Card>
-              <div className="text-center text-foreground-muted py-12">
+              <div className="text-center text-foreground-muted py-12 font-brand font-normal">
                 Select a conversation to view messages
               </div>
             </Card>

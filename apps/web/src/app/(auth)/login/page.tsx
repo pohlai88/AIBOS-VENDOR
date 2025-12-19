@@ -1,112 +1,89 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Input } from "@aibos/ui";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { FormField } from "@/components/auth/FormField";
+import { useAuthForm } from "@/hooks/useAuthForm";
+import type { LoginFormData } from "@/types/auth";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const { loading, error, submit } = useAuthForm<LoginFormData>({
+    endpoint: "/api/auth/login",
+    redirectTo: redirect,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Login failed");
-        setLoading(false);
-        return;
-      }
-
-      router.push(redirect);
-      router.refresh();
-    } catch (err) {
-      setError("An unexpected error occurred");
-      setLoading(false);
-    }
+    await submit({ email, password });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-background-elevated border border-border rounded-lg p-8">
-          <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
-            Sign In to Vendor Portal
-          </h1>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="email"
-              label="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-              autoComplete="email"
-            />
-
-            <Input
-              type="password"
-              label="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              autoComplete="current-password"
-            />
-
-            {error && (
-              <div className="bg-error-900/50 border border-error-700 text-error-200 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center space-y-2">
+    <AuthPageLayout>
+      <AuthForm
+        title="Sign In"
+        subtitle="Access your institutional-grade vendor governance platform"
+        error={error}
+        onSubmit={handleSubmit}
+        footer={
+          <>
             <Link
               href="/reset-password"
-              className="text-sm text-primary-400 hover:text-primary-300"
+              className="block text-sm text-foreground-muted hover:text-foreground transition-colors font-brand font-normal"
             >
               Forgot password?
             </Link>
-            <div className="text-sm text-foreground-muted">
+            <div className="text-sm text-foreground-muted font-brand font-normal">
               Don't have an account?{" "}
               <Link
                 href="/signup"
-                className="text-primary-400 hover:text-primary-300"
+                className="text-foreground hover:underline transition-colors"
               >
                 Sign up
               </Link>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </>
+        }
+      >
+        <FormField
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          disabled={loading}
+          autoComplete="email"
+        />
+
+        <FormField
+          type="password"
+          label="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          disabled={loading}
+          autoComplete="current-password"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-foreground text-background border border-foreground hover:bg-foreground/90 transition-all duration-base text-xs font-normal uppercase tracking-[0.2em] disabled:opacity-50 disabled:cursor-not-allowed group font-brand"
+        >
+          {loading ? "Signing in..." : "Sign In"}
+          <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+      </AuthForm>
+    </AuthPageLayout>
   );
 }
 

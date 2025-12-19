@@ -137,7 +137,7 @@ export async function hasPermission(
 
   switch (permission) {
     case "admin":
-      return user.role === "admin";
+      return user.role === "company_admin";
     case "write":
       return ["admin", "vendor", "company"].includes(user.role);
     case "read":

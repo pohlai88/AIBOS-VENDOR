@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { SettingsClient } from "@/components/settings/SettingsClient";
 import { createClient } from "@/lib/supabase/server";
 
+
 // Force dynamic rendering since this page requires authentication and database calls
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Settings | AI-BOS Vendor Portal",
+  title: "Settings",
   description: "Manage your account settings, profile, and preferences",
 };
 

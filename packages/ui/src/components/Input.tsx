@@ -26,7 +26,7 @@ const inputVariants = cva(
 
 export interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
-    VariantProps<typeof inputVariants> {
+  VariantProps<typeof inputVariants> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -58,6 +58,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={ariaDescribedBy}
+          aria-required={props.required ? "true" : undefined}
           {...props}
         />
         {error && (

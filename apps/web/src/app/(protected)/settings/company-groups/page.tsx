@@ -6,7 +6,7 @@ import { CompanyGroupsManagementClient } from "@/components/settings/CompanyGrou
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Company Groups | AI-BOS Vendor Portal",
+  title: "Company Groups",
   description: "Manage company groups within your tenant",
 };
 

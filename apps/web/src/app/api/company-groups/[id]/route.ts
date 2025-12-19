@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth, requireRole } from "@/lib/auth";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
@@ -13,7 +13,7 @@ export const runtime = "nodejs";
  * Get a specific company group
  */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -64,14 +64,14 @@ export async function GET(
  * Update a company group (admin only)
  */
 export async function PATCH(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireRole(["company_admin"]);
     const { id } = await params;
     const supabase = await createClient();
-    const body = await request.json();
+    const body = await _request.json();
 
     // Verify company group belongs to user's tenant
     const { data: existing } = await supabase
@@ -156,7 +156,7 @@ export async function PATCH(
  * Delete a company group (admin only)
  */
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

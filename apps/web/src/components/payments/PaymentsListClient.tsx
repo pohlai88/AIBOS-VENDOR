@@ -65,7 +65,15 @@ export const PaymentsListClient = memo(function PaymentsListClient({
     {
       key: "amount",
       header: "Amount",
-      render: (payment) => formatCurrency(payment.amount, payment.currency),
+      render: (payment) => (
+        <a
+          href={`/payments/${payment.id}`}
+          aria-label={`View payment details for ${formatCurrency(payment.amount, payment.currency)}`}
+          className="text-primary-400 hover:text-primary-300 underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+        >
+          {formatCurrency(payment.amount, payment.currency)}
+        </a>
+      ),
     },
     {
       key: "status",

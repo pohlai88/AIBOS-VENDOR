@@ -36,7 +36,7 @@ export function createErrorResponse(
  * @deprecated Use createSuccessResponse from lib/api-utils for consistency
  * This function is kept for backward compatibility but routes should migrate to api-utils
  */
-export function createSuccessResponse<T>(data: T, status: number = 200): NextResponse {
+export function createSuccessResponse<T>(data: T, _status: number = 200): NextResponse {
   // Re-export from api-utils for consistency
   const { createSuccessResponse: createSuccessResponseNew } = require('@/lib/api-utils')
   return createSuccessResponseNew(data)

@@ -38,7 +38,7 @@ export async function uploadFile(config: UploadConfig) {
   if (error) {
     // Preserve Supabase error details for better error handling
     const uploadError: any = new Error(`Upload failed: ${error.message}`);
-    uploadError.code = error.statusCode || error.error || undefined;
+    uploadError.code = (error as any).statusCode || (error as any).error || undefined;
     uploadError.message = error.message;
     uploadError.originalError = error;
     throw uploadError;

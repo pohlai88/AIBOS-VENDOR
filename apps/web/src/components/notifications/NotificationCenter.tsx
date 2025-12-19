@@ -19,11 +19,23 @@ export const NotificationCenter = memo(function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [, setConnectionStatus] = useState<"connected" | "disconnected" | "error">("disconnected");
   const supabase = createClient();
 
+  // Fetch current user ID
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    fetchCurrentUser();
+  }, [supabase]);
+
   const fetchNotifications = useCallback(async () => {
-    // In a real implementation, fetch from API
-    // For now, we'll use Supabase real-time subscriptions
+    // Fetch from Supabase with user filter (RLS will enforce security)
     const { data } = await supabase
       .from("notifications")
       .select("*")
@@ -47,52 +59,58 @@ export const NotificationCenter = memo(function NotificationCenter() {
   }, [supabase]);
 
   useEffect(() => {
+    if (!currentUserId) return;
+
+    // Fetch initial notifications
     fetchNotifications();
 
-    // Subscribe to new notifications
+    // Subscribe to Broadcast events for user-specific notifications
     const channel = supabase
-      .channel("notifications")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-        },
-        (payload) => {
-          const newNotification: Notification = {
-            id: payload.new.id,
-            title: payload.new.title || "Notification",
-            message: payload.new.message || "",
-            type: (payload.new.type as Notification["type"]) || "info",
-            read: false,
-            createdAt: payload.new.created_at,
-            link: payload.new.link,
-          };
+      .channel(`user:${currentUserId}:notifications`, {
+        config: { private: true } // ✅ Private channel with RLS
+      })
+      .on("broadcast", { event: "notification_created" }, async () => {
+        // Refetch notifications to get authoritative data
+        // Don't trust broadcast payload alone (security best practice)
+        await fetchNotifications();
 
-          setNotifications((prev) => [newNotification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-
-          // Show browser notification if permission granted
-          if (Notification.permission === "granted") {
-            new Notification(newNotification.title, {
-              body: newNotification.message,
-              icon: "/favicon.ico",
-            });
-          }
+        // Show browser notification if permission granted
+        if (Notification.permission === "granted") {
+          new Notification("New notification", {
+            body: "You have a new notification",
+            icon: "/favicon.ico",
+          });
         }
-      )
-      .subscribe();
+      })
+      .subscribe((status) => {
+        // ✅ Handle subscription status
+        if (status === "SUBSCRIBED") {
+          setConnectionStatus("connected");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setConnectionStatus("error");
+          console.error("Failed to subscribe to notifications:", status);
+          // Could implement retry logic here
+        } else if (status === "CLOSED") {
+          setConnectionStatus("disconnected");
+        }
+      });
 
     // Request notification permission
     if (Notification.permission === "default") {
       Notification.requestPermission();
     }
 
+    // Fetch on tab focus (reliability pattern)
+    const handleFocus = () => {
+      fetchNotifications();
+    };
+    window.addEventListener("focus", handleFocus);
+
     return () => {
+      window.removeEventListener("focus", handleFocus);
       supabase.removeChannel(channel);
     };
-  }, [supabase, fetchNotifications]);
+  }, [supabase, fetchNotifications, currentUserId]);
 
   // Keyboard navigation: Close on Escape key
   useEffect(() => {

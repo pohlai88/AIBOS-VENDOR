@@ -4,6 +4,7 @@ import { DocumentsList } from "@/components/documents/DocumentsList";
 import { DocumentUploadButton } from "@/components/documents/DocumentUploadButton";
 import { Card } from "@aibos/ui";
 
+
 // Force dynamic rendering since this page requires authentication and API calls
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   title: "Documents",
   description: "Manage and access your documents, invoices, contracts, and statements",
   openGraph: {
-    title: "Documents | AI-BOS Vendor Portal",
+    title: "Documents",
     description: "Manage and access your documents, invoices, contracts, and statements",
   },
 };
@@ -73,7 +74,7 @@ export default async function DocumentsPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Documents</h1>
+        <h1 className="text-3xl font-serif text-foreground font-normal">Documents</h1>
         <DocumentUploadButton />
       </div>
 

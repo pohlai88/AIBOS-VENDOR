@@ -4,6 +4,7 @@ import "./globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageTracking } from "@/components/PageTracking";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { LoadingBar } from "@/components/common/LoadingBar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -59,6 +60,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <ErrorBoundary>
+            <LoadingBar />
             <PageTracking />
             <main id="main-content" tabIndex={-1}>
               {children}

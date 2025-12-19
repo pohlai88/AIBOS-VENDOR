@@ -10,8 +10,31 @@ export function DashboardStatsClient({
   initialStats: DashboardStatsResponse;
 }) {
   const [stats, setStats] = useState(initialStats);
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [, setConnectionStatus] = useState<"connected" | "disconnected" | "error">("disconnected");
   const supabase = createClient();
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch current user's tenant and organization IDs
+  useEffect(() => {
+    const fetchUserContext = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data: user } = await supabase
+          .from("users")
+          .select("tenant_id, organization_id")
+          .eq("id", authUser.id)
+          .single();
+
+        if (user) {
+          setTenantId(user.tenant_id);
+          setOrganizationId(user.organization_id);
+        }
+      }
+    };
+    fetchUserContext();
+  }, [supabase]);
 
   // Debounced fetch function to avoid multiple rapid API calls
   const fetchStats = useCallback(() => {
@@ -44,69 +67,55 @@ export function DashboardStatsClient({
   }, []);
 
   useEffect(() => {
-    // Subscribe to real-time updates
-    const documentsChannel = supabase
-      .channel("dashboard-documents")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "documents",
-        },
-        fetchStats
-      )
-      .subscribe();
+    if (!tenantId || !organizationId) return;
 
-    const paymentsChannel = supabase
-      .channel("dashboard-payments")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "payments",
-        },
-        fetchStats
-      )
-      .subscribe();
+    // Fetch initial stats
+    fetchStats();
 
-    const statementsChannel = supabase
-      .channel("dashboard-statements")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "statements",
-        },
-        fetchStats
-      )
-      .subscribe();
+    // ✅ Single channel for all dashboard updates (instead of 4 separate channels)
+    const channel = supabase
+      .channel(`tenant:${tenantId}:org:${organizationId}:dashboard`, {
+        config: { private: true } // ✅ Private channel with RLS
+      })
+      .on("broadcast", { event: "stats_invalidated" }, () => {
+        // Debounced refetch (already implemented)
+        fetchStats();
+      })
+      .subscribe((status) => {
+        // ✅ Handle subscription status
+        if (status === "SUBSCRIBED") {
+          setConnectionStatus("connected");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setConnectionStatus("error");
+          console.error("Failed to subscribe to dashboard updates:", status);
+          // Could implement retry logic here
+        } else if (status === "CLOSED") {
+          setConnectionStatus("disconnected");
+        }
+      });
 
-    const messagesChannel = supabase
-      .channel("dashboard-messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-        },
-        fetchStats
-      )
-      .subscribe();
+    // Fetch on tab focus (reliability pattern)
+    const handleFocus = () => {
+      fetchStats();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    // Optional: Slow polling catch-up (every 60s) for reliability
+    const pollingInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchStats();
+      }
+    }, 60000);
 
     return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(pollingInterval);
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
-      supabase.removeChannel(documentsChannel);
-      supabase.removeChannel(paymentsChannel);
-      supabase.removeChannel(statementsChannel);
-      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(channel);
     };
-  }, [supabase, fetchStats]);
+  }, [supabase, fetchStats, tenantId, organizationId]);
 
   // Render stats using the same component structure
   return (

@@ -22,9 +22,14 @@ export function TenantManagementClient() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    subscription_tier: "free" | "basic" | "professional" | "enterprise";
+    max_users: number;
+    max_companies: number;
+  }>({
     name: "",
-    subscription_tier: "free" as const,
+    subscription_tier: "free",
     max_users: 10,
     max_companies: 5,
   });
@@ -113,8 +118,8 @@ export function TenantManagementClient() {
         {message && (
           <div
             className={`mb-6 p-4 rounded-lg border ${message.type === "success"
-                ? "bg-success-900/50 border-success-700 text-success-200"
-                : "bg-error-900/50 border-error-700 text-error-200"
+              ? "bg-success-900/50 border-success-700 text-success-200"
+              : "bg-error-900/50 border-error-700 text-error-200"
               }`}
           >
             {message.text}
@@ -203,12 +208,16 @@ export function TenantManagementClient() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => tenant && setFormData({
-                name: tenant.name,
-                subscription_tier: tenant.subscription_tier,
-                max_users: tenant.max_users,
-                max_companies: tenant.max_companies,
-              })}
+              onClick={() => {
+                if (tenant) {
+                  setFormData({
+                    name: tenant.name,
+                    subscription_tier: tenant.subscription_tier,
+                    max_users: tenant.max_users,
+                    max_companies: tenant.max_companies,
+                  });
+                }
+              }}
               disabled={saving}
             >
               Reset

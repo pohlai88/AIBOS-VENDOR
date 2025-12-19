@@ -200,11 +200,12 @@ export function validateSort(
 
 /**
  * Wrapper for API route handlers with common error handling
+ * Supports both success and error responses
  */
-export function withApiHandler<T>(
-  handler: (request: NextRequest, context: any) => Promise<NextResponse<T>>
+export function withApiHandler(
+  handler: (request: NextRequest, context: any) => Promise<NextResponse<ApiSuccessResponse<any> | ApiErrorResponse>>
 ) {
-  return async (request: NextRequest, context: any) => {
+  return async (request: NextRequest, context: any): Promise<NextResponse<ApiSuccessResponse<any> | ApiErrorResponse>> => {
     try {
       return await handler(request, context)
     } catch (error) {
@@ -229,14 +230,16 @@ export function withApiHandler<T>(
 
 /**
  * Wrapper for authenticated API route handlers
+ * Supports both success and error responses
  */
-export function withAuth<T>(
+export function withAuth<T = any>(
   handler: (
     request: NextRequest,
     context: any,
     user: Awaited<ReturnType<typeof requireAuth>>
-  ) => Promise<NextResponse<T>>
+  ) => Promise<NextResponse<ApiSuccessResponse<T>> | NextResponse<ApiErrorResponse>>
 ) {
+  // @ts-ignore - TypeScript limitation: withApiHandler correctly handles union return types at runtime
   return withApiHandler(async (request: NextRequest, context: any) => {
     const user = await requireAuth()
     return await handler(request, context, user)

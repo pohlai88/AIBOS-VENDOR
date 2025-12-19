@@ -70,7 +70,7 @@ export function useAuth(): UseAuthReturn {
     };
 
     // Fetch user from API
-    const fetchUser = async (accessToken: string) => {
+    const fetchUser = async (_accessToken?: string) => {
       try {
         const response = await fetch("/api/auth/me", {
           credentials: "include", // Include cookies (session-based auth)
@@ -109,7 +109,7 @@ export function useAuth(): UseAuthReturn {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
 
       if (session) {

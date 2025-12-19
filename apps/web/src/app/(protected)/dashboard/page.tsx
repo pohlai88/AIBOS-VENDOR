@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "Dashboard",
   description: "Vendor portal dashboard with overview of documents, payments, statements, and messages",
   openGraph: {
-    title: "Dashboard | AI-BOS Vendor Portal",
+    title: "Dashboard",
     description: "Vendor portal dashboard with overview of documents, payments, statements, and messages",
   },
 };
@@ -28,7 +28,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-foreground">Dashboard</h1>
+      <h1 className="text-3xl font-serif text-foreground mb-8 font-normal">Dashboard</h1>
 
       {/* Dashboard Stats with Suspense for streaming */}
       <div className="mb-8">

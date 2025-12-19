@@ -19,6 +19,7 @@ export const MessageThread = memo(function MessageThread({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [, setConnectionStatus] = useState<"connected" | "disconnected" | "error">("disconnected");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fetchMessages = useCallback(async () => {
@@ -47,27 +48,53 @@ export const MessageThread = memo(function MessageThread({
 
     const supabase = createClient();
 
-    // Subscribe to new messages
+    // ✅ Subscribe to new messages with private channel and validation
     const channel = supabase
-      .channel(`messages:${threadId}`)
+      .channel(`thread:${threadId}:messages`, {
+        config: { private: true } // ✅ Private channel with RLS
+      })
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `thread_id=eq.${threadId}`,
+          filter: `thread_id=eq.${threadId}`, // ✅ Thread-scoped filter
         },
         (payload) => {
-          if (payload.new) {
-            setMessages((prev) => [...prev, payload.new as Message]);
+          // ✅ Validate message belongs to this thread (security check)
+          if (payload.new && payload.new.thread_id === threadId) {
+            // ✅ Check if message already exists (avoid duplicates)
+            setMessages((prev) => {
+              const exists = prev.some((m) => m.id === payload.new.id);
+              if (exists) return prev;
+              return [...prev, payload.new as Message];
+            });
             scrollToBottom();
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        // ✅ Handle subscription status
+        if (status === "SUBSCRIBED") {
+          setConnectionStatus("connected");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setConnectionStatus("error");
+          console.error("Failed to subscribe to messages:", status);
+          // Could implement retry logic here
+        } else if (status === "CLOSED") {
+          setConnectionStatus("disconnected");
+        }
+      });
+
+    // Fetch on tab focus (reliability pattern)
+    const handleFocus = () => {
+      fetchMessages();
+    };
+    window.addEventListener("focus", handleFocus);
 
     return () => {
+      window.removeEventListener("focus", handleFocus);
       supabase.removeChannel(channel);
     };
   }, [threadId, fetchMessages, fetchCurrentUser, scrollToBottom]);

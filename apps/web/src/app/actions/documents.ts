@@ -84,10 +84,11 @@ export async function deleteDocument(formData: FormData) {
     })
 
     // Revalidate cache with targeted tags (best practice)
-    revalidateTag('documents')
-    revalidateTag(`documents:tenant:${user.tenantId}`)
-    revalidateTag(`documents:org:${user.organizationId}`)
-    revalidateTag(`documents:${id}`) // Specific document
+    // Note: revalidateTag requires 2 arguments in Next.js 16 (tag, profile)
+    revalidateTag('documents', 'max')
+    revalidateTag(`documents:tenant:${user.tenantId}`, 'max')
+    revalidateTag(`documents:org:${user.organizationId}`, 'max')
+    revalidateTag(`documents:${id}`, 'max') // Specific document
     revalidatePath('/documents') // Revalidate the documents page
 
     return { success: true }
@@ -160,10 +161,11 @@ export async function updateDocument(formData: FormData) {
     await logDocumentAccess(document.id, user.id, 'update')
 
     // Revalidate cache with targeted tags
-    revalidateTag('documents')
-    revalidateTag(`documents:tenant:${user.tenantId}`)
-    revalidateTag(`documents:org:${user.organizationId}`)
-    revalidateTag(`documents:${id}`) // Specific document
+    // Note: revalidateTag requires 2 arguments in Next.js 16 (tag, profile)
+    revalidateTag('documents', 'max')
+    revalidateTag(`documents:tenant:${user.tenantId}`, 'max')
+    revalidateTag(`documents:org:${user.organizationId}`, 'max')
+    revalidateTag(`documents:${id}`, 'max') // Specific document
     revalidatePath('/documents')
 
     return { success: true, document: updatedDocument }

@@ -9,14 +9,13 @@ import {
   withAuth,
   validatePagination,
   validateSort,
-  authenticatedRouteConfig,
 } from "@/lib/api-utils";
 
 // Route segment config following Next.js 16 best practices
 // force-dynamic: Always render on request (authenticated route)
 // nodejs runtime: Required for Supabase client (Node.js library)
-export const dynamic = authenticatedRouteConfig.dynamic;
-export const revalidate = authenticatedRouteConfig.revalidate;
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 export const runtime = "nodejs";
 
 export const GET = withAuth(async (request: NextRequest, _context, user) => {
@@ -25,6 +24,7 @@ export const GET = withAuth(async (request: NextRequest, _context, user) => {
   const category = searchParams.get("category");
   const search = searchParams.get("search");
   const vendorId = searchParams.get("vendorId");
+  const useSemantic = searchParams.get("semantic") === "true"; // Optional semantic search flag
 
   // Validate pagination (best practice)
   const { page, limit, offset } = validatePagination(searchParams);
@@ -36,6 +36,81 @@ export const GET = withAuth(async (request: NextRequest, _context, user) => {
     validSortFields
   );
 
+  // If semantic search is requested and query is substantial, use hybrid search
+  if (useSemantic && search && search.length > 3) {
+    try {
+      const { hybridSearchDocuments } = await import("@/lib/semantic-search");
+      const hybridResults = await hybridSearchDocuments(
+        search,
+        user.tenantId,
+        user.organizationId,
+        { limit, useSemantic: true }
+      );
+
+      // Get full document details for combined results
+      if (hybridResults.combined.length > 0) {
+        const documentIds = hybridResults.combined.map(r => r.document_id);
+
+        let documentsQuery = supabase
+          .from("documents")
+          .select("id, name, category, file_size, created_at, mime_type, file_url, is_shared, vendor_id, organization_id")
+          .in("id", documentIds)
+          .eq("tenant_id", user.tenantId);
+
+        // Apply role-based filtering
+        if (user.role === "vendor") {
+          documentsQuery = documentsQuery.or(
+            `organization_id.eq.${user.organizationId},and(vendor_id.eq.${user.organizationId},is_shared.eq.true)`
+          );
+        } else {
+          documentsQuery = documentsQuery.or(
+            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active and tenant_id.eq.${user.tenantId})`
+          );
+        }
+
+        if (category) {
+          documentsQuery = documentsQuery.eq("category", category);
+        }
+
+        if (vendorId && user.role !== "vendor") {
+          documentsQuery = documentsQuery.eq("vendor_id", vendorId);
+        }
+
+        const { data: documentsData, error: documentsError } = await documentsQuery;
+
+        if (documentsError) {
+          // Fall back to keyword search
+          logError("[Hybrid Search] Failed to fetch document details", documentsError);
+        } else {
+          // Preserve search result order and similarity
+          const docMap = new Map(documentsData?.map(d => [d.id, d]) || []);
+          const orderedDocuments = hybridResults.combined
+            .map(r => docMap.get(r.document_id))
+            .filter(Boolean) as typeof documentsData;
+
+          return createSuccessResponse({
+            documents: orderedDocuments || [],
+            pagination: {
+              currentPage: page,
+              totalPages: Math.ceil(orderedDocuments.length / limit),
+              totalItems: orderedDocuments.length,
+              itemsPerPage: limit,
+            },
+            searchMetadata: {
+              searchType: "hybrid",
+              keywordCount: hybridResults.keywordResults.length,
+              semanticCount: hybridResults.semanticResults.length,
+            },
+          });
+        }
+      }
+    } catch (semanticError) {
+      // Graceful degradation: fall back to keyword search
+      logError("[Semantic Search] Failed, falling back to keyword search", semanticError);
+    }
+  }
+
+  // Standard keyword search (default or fallback)
   // Build base query with count for total items
   // Only select fields that are actually used to reduce payload size
   // RLS enforces tenant isolation, but we explicitly filter for defense in depth
@@ -154,7 +229,7 @@ export const POST = withAuth(async (request: NextRequest, _context, user) => {
   }
 
   // Get signed URL for private file (best practice: use signed URLs instead of public URLs)
-  const { signedUrl } = await getSignedUrl("documents", fileName, 3600);
+  const signedUrl = await getSignedUrl("documents", fileName, 3600);
 
   // Create document record with tenant_id
   const { data: document, error: docError } = await supabase

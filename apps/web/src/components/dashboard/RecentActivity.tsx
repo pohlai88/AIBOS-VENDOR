@@ -11,7 +11,14 @@ import { cache } from "react";
  * - Parallel data fetching
  * - Request memoization with cache()
  */
-const fetchRecentActivity = cache(async () => {
+type Activity = {
+  type: "document" | "payment" | "message";
+  title: string;
+  date: string;
+  id: string;
+};
+
+const fetchRecentActivity = cache(async (): Promise<Activity[]> => {
   const user = await getCurrentUser();
   if (!user) return [];
 
@@ -77,12 +84,7 @@ const fetchRecentActivity = cache(async () => {
   ]);
 
   // Combine and sort by date
-  const activities: Array<{
-    type: "document" | "payment" | "message";
-    title: string;
-    date: string;
-    id: string;
-  }> = [];
+  const activities: Activity[] = [];
 
   recentDocuments.data?.forEach((doc) => {
     activities.push({
@@ -115,7 +117,7 @@ const fetchRecentActivity = cache(async () => {
   return activities
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
-}
+});
 
 export async function RecentActivity() {
   const activities = await fetchRecentActivity();
@@ -137,7 +139,7 @@ export async function RecentActivity() {
             className="flex items-center justify-between py-2 border-b border-border last:border-0"
           >
             <div className="flex-1">
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-normal text-foreground">
                 {activity.type === "document" && "📄 "}
                 {activity.type === "payment" && "💳 "}
                 {activity.type === "message" && "💬 "}

@@ -3,75 +3,33 @@ import type { Metadata } from "next";
 import {
   ShieldCheck,
   Globe,
-  ArrowUpRight,
   Building2,
   Fingerprint,
   Lock,
-  Zap,
-  CheckCircle2
-} from 'lucide-react';
-import { NexusIcon } from '@/components/icons/NexusIcon';
-import { BrandName } from '@/components/brand/BrandName';
+} from "lucide-react";
+import { NexusIcon } from "@/components/icons/NexusIcon";
+import { BrandName } from "@/components/brand/BrandName";
+import { Section } from "@/components/landing/Section";
+import { LandingButton } from "@/components/landing/LandingButton";
+import { StatusBadge } from "@/components/landing/StatusBadge";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { MetricsGrid } from "@/components/landing/MetricsGrid";
+import {
+  NAV_LINKS,
+  TRUSTED_PROFESSIONALS,
+  METRICS,
+} from "@/data/landing";
+
 
 export const metadata: Metadata = {
   title: "NexusCanon - Institutional-Grade Vendor Governance",
-  description: "Eliminate supply chain opacity. Orchestrate global procurement, compliance, and risk mitigation from a single, institutional-grade terminal.",
+  description:
+    "Eliminate supply chain opacity. Orchestrate global procurement, compliance, and risk mitigation from a single, institutional-grade terminal.",
 };
 
-// --- DATA LAYER (Move this to a separate file in production) ---
-
-const NAV_LINKS = [
-  { name: 'Platform', href: '#platform' },
-  { name: 'Intelligence', href: '#intelligence' },
-  { name: 'Governance', href: '#governance' },
-  { name: 'Security', href: '#security' },
-];
-
-const COMPLIANCE_BADGES = ['SOC2 TYPE II', 'ISO 27001', 'GDPR'];
-
-const HERO_CHECKPOINTS = [
-  "Zero-trust vendor verification",
-  "Continuous financial health monitoring",
-  "Immutable audit trails"
-];
-
-const METRICS = [
-  { label: "Active Vendors", val: "1,240", delta: "+12%", icon: Building2 },
-  { label: "Compliance", val: "99.9%", delta: "+0.4%", icon: ShieldCheck },
-  { label: "Spend Vol", val: "$2.4B", delta: "Q3", icon: Zap },
-  { label: "Risk Alerts", val: "0", delta: "Active", icon: Lock },
-];
-
-const TRUSTED_PROFESSIONALS = ["Auditors", "Accountants", "Venture Capitals", "Private Equity", "Compliance Officers", "Risk Managers", "CFOs", "Legal Counsel"];
-
-// --- REUSABLE UI COMPONENTS ---
-
-const Section = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <section className={`px-6 md:px-12 ${className}`}>
-    <div className="max-w-[1600px] mx-auto">{children}</div>
-  </section>
-);
-
-const Button = ({ children, variant = 'primary', className = "" }: { children: React.ReactNode, variant?: 'primary' | 'outline', className?: string }) => {
-  const baseStyle = "flex items-center justify-center gap-3 px-6 py-3 transition-all duration-base group text-xs font-normal uppercase tracking-[0.2em]";
-  const variants = {
-    primary: "bg-foreground text-background border border-foreground hover:bg-foreground/90",
-    outline: "border border-border text-foreground hover:bg-background-hover hover:border-border-hover"
-  };
-
-  return (
-    <button className={`${baseStyle} ${variants[variant]} ${className}`}>
-      {children}
-      <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
-    </button>
-  );
-};
-
-const StatusBadge = ({ text }: { text: string }) => (
-  <div className="px-3 py-1 border border-border bg-background-elevated text-[9px] font-normal font-brand tracking-wider text-foreground-muted">
-    {text}
-  </div>
-);
+// Route segment config for static generation with ISR
+export const dynamic = "force-static";
+export const revalidate = 3600;
 
 // --- MAIN PAGE COMPONENT ---
 
@@ -81,10 +39,13 @@ export default function NexusCanonLanding() {
     <div className="w-full min-h-screen bg-background text-foreground font-sans selection:bg-foreground/10 selection:text-foreground overflow-x-hidden">
 
       {/* NAVIGATION */}
-      {/* OPTIMIZED: bg-background/80, border-border */}
-      <nav className="fixed top-0 w-full z-fixed border-b border-border bg-background/80 backdrop-blur-xl">
+      <nav
+        className="fixed top-0 w-full z-fixed border-b border-border bg-background/80 backdrop-blur-xl"
+        role="navigation"
+        aria-label="Main navigation"
+      >
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-4 group">
+          <Link href="/" className="flex items-center gap-4 group" aria-label="NexusCanon Home">
             <div className="w-10 h-10 flex items-center justify-center">
               <NexusIcon size="lg" animated />
             </div>
@@ -93,87 +54,28 @@ export default function NexusCanonLanding() {
             </div>
           </Link>
 
-          {/* OPTIMIZED: text-foreground-muted */}
           <div className="hidden lg:flex items-center gap-10 text-[10px] font-normal font-brand uppercase tracking-[0.25em] text-foreground-muted">
-            {NAV_LINKS.map(link => (
-              <Link key={link.name} href={link.href} className="hover:text-foreground transition-colors duration-base">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="hover:text-foreground transition-colors duration-base"
+                aria-label={`Navigate to ${link.name} section`}
+              >
                 {link.name}
               </Link>
             ))}
           </div>
 
           <Link href="/signup">
-            {/* OPTIMIZED: border-border */}
-            <button className="flex items-center gap-3 border border-border px-6 py-2.5 hover:bg-foreground hover:text-background hover:border-foreground transition-all duration-base group">
-              <span className="text-[10px] font-normal uppercase tracking-[0.2em]">Request Access</span>
-              <ArrowUpRight className="w-3.5 h-3.5 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            <LandingButton className="px-6 py-2.5">Request Access</LandingButton>
           </Link>
         </div>
       </nav>
 
       {/* HERO SECTION */}
       <Section className="pt-48 pb-36">
-        {/* Status Bar */}
-        {/* OPTIMIZED: border-border, success-500 */}
-        <div className="flex items-center gap-6 mb-20 pb-10 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-success-500"></span>
-            </div>
-            <span className="text-[10px] font-normal font-brand uppercase tracking-[0.2em] text-foreground-muted">
-              System Operational
-            </span>
-          </div>
-          <div className="w-px h-3 bg-border"></div>
-          <span className="text-[10px] font-brand tracking-wider text-foreground-subtle">v2.0.4</span>
-          <div className="flex-1"></div>
-          <div className="hidden md:flex items-center gap-3">
-            {COMPLIANCE_BADGES.map(badge => <StatusBadge key={badge} text={badge} />)}
-          </div>
-        </div>
-
-        {/* Hero Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 mb-24 items-end">
-          <div className="lg:col-span-7 space-y-10">
-            <h1 className="text-6xl md:text-9xl font-serif leading-[0.9] tracking-tight text-foreground">
-              Total Vendor <br />
-              <span className="italic text-foreground/40">Command.</span>
-            </h1>
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-px bg-foreground/40"></div>
-              <p className="text-[10px] font-normal font-brand uppercase tracking-[0.25em] text-foreground-muted">
-                Institutional Grade
-              </p>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 border-l border-border pl-12 space-y-10 pb-2">
-            {/* OPTIMIZED: text-foreground-muted */}
-            <p className="text-lg text-foreground-muted leading-relaxed font-light">
-              Eliminate supply chain opacity. Orchestrate global procurement,
-              compliance, and risk mitigation from a single,
-              <span className="font-medium text-foreground"> institutional-grade terminal.</span>
-            </p>
-
-            <div className="space-y-3">
-              {HERO_CHECKPOINTS.map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  {/* OPTIMIZED: success-500 */}
-                  <CheckCircle2 className="w-4 h-4 text-success-500" />
-                  <p className="text-sm text-foreground-muted">{item}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-6">
-              <Link href="/signup">
-                <Button className="w-full py-4">Book Strategic Demo</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+        <HeroSection />
 
         {/* Dashboard Mockup */}
         {/* OPTIMIZED: bg-background-elevated, border-border */}
@@ -267,23 +169,7 @@ export default function NexusCanonLanding() {
               </div>
             </div>
 
-            {/* OPTIMIZED: Using design system tokens */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
-              {METRICS.map((stat, i) => {
-                const IconComponent = stat.icon;
-                return (
-                  <div key={i} className="border border-border bg-background-elevated/30 p-6 hover:bg-background-hover transition-colors duration-base">
-                    <div className="flex items-center justify-between mb-5">
-                      <IconComponent className="w-4 h-4 text-foreground-subtle" />
-                      <p className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest">{stat.label}</p>
-                    </div>
-                    <p className="text-2xl font-serif text-foreground mb-2">{stat.val}</p>
-                    {/* OPTIMIZED: success-500 */}
-                    <p className="text-[10px] text-success-500/70 font-brand tracking-wider">{stat.delta}</p>
-                  </div>
-                );
-              })}
-            </div>
+            <MetricsGrid metrics={METRICS} />
           </div>
         </div>
       </Section>
@@ -297,7 +183,10 @@ export default function NexusCanonLanding() {
           </div>
           <div className="flex-1 flex flex-wrap justify-around items-center py-6 gap-6 px-12">
             {TRUSTED_PROFESSIONALS.map((role) => (
-              <span key={role} className="font-serif text-lg text-foreground/20 hover:text-foreground/40 transition-colors cursor-default">
+              <span
+                key={role}
+                className="font-serif text-lg text-foreground/20 hover:text-foreground/40 transition-colors cursor-default font-normal"
+              >
                 {role}
               </span>
             ))}
@@ -305,38 +194,10 @@ export default function NexusCanonLanding() {
         </div>
       </div>
 
-      {/* PLATFORM SECTION */}
-      <Section id="platform" className="py-24 scroll-mt-20">
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
-            Platform <span className="text-foreground/30 italic">Capabilities.</span>
-          </h2>
-          <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
-        </div>
-        <p className="text-lg text-foreground-muted font-light leading-relaxed max-w-3xl mb-12">
-          Comprehensive vendor governance platform designed for institutional-grade operations.
-          Manage procurement, compliance, and risk mitigation from a single, unified terminal.
-        </p>
-      </Section>
-
-      {/* INTELLIGENCE SECTION */}
-      <Section id="intelligence" className="py-24 scroll-mt-20">
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
-            Intelligence <span className="text-foreground/30 italic">Insights.</span>
-          </h2>
-          <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
-        </div>
-        <p className="text-lg text-foreground-muted font-light leading-relaxed max-w-3xl mb-12">
-          Real-time monitoring and analytics across your entire vendor network.
-          Continuous financial health monitoring, risk assessment, and compliance tracking.
-        </p>
-      </Section>
-
       {/* GOVERNANCE SECTION */}
       <Section id="governance" className="py-24 scroll-mt-20">
         <div className="mb-12">
-          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
+          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground font-normal">
             Institutional <span className="text-foreground/30 italic">Governance.</span>
           </h2>
           <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
@@ -345,16 +206,15 @@ export default function NexusCanonLanding() {
         {/* OPTIMIZED: border-border */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-px bg-border border border-border overflow-hidden">
           {/* Feature 1 */}
-          {/* OPTIMIZED: bg-background, hover:bg-background-hover */}
           <div className="md:col-span-8 bg-background p-8 md:p-12 hover:bg-background-hover transition-colors group">
-            <ShieldCheck className="w-10 h-10 text-foreground/80 mb-6 stroke-1" />
-            <h3 className="text-3xl font-serif text-foreground mb-3">Zero-Trust Risk Assessment</h3>
-            <p className="text-foreground-muted font-light leading-relaxed max-w-lg mb-6">
+            <ShieldCheck className="w-10 h-10 text-foreground/80 mb-6 stroke-1" aria-hidden="true" />
+            <h3 className="text-3xl font-serif text-foreground mb-3 font-normal">Zero-Trust Risk Assessment</h3>
+            <p className="text-foreground-muted font-normal leading-relaxed max-w-lg mb-6 font-brand">
               Automated background checks against 400+ global watchlists.
               Continuous monitoring of vendor financial health and reputational signals.
             </p>
             <div className="flex gap-2">
-              {['AML', 'Sanctions', 'PEP'].map(tag => (
+              {["AML", "Sanctions", "PEP"].map((tag) => (
                 <StatusBadge key={tag} text={tag} />
               ))}
             </div>
@@ -362,32 +222,33 @@ export default function NexusCanonLanding() {
 
           {/* Feature 2 */}
           <div className="md:col-span-4 bg-background p-8 md:p-12 hover:bg-background-hover transition-colors">
-            <Fingerprint className="w-10 h-10 text-foreground/80 mb-6 stroke-1" />
-            <h3 className="text-2xl font-serif text-foreground mb-3">Immutable Audit</h3>
-            <p className="text-foreground-muted font-light leading-relaxed">
+            <Fingerprint className="w-10 h-10 text-foreground/80 mb-6 stroke-1" aria-hidden="true" />
+            <h3 className="text-2xl font-serif text-foreground mb-3 font-normal">Immutable Audit</h3>
+            <p className="text-foreground-muted font-normal leading-relaxed font-brand">
               Blockchain-backed logs for every contract interaction.
             </p>
           </div>
 
           {/* Feature 3 */}
           <div className="md:col-span-4 bg-background p-8 md:p-12 hover:bg-background-hover transition-colors">
-            <Building2 className="w-10 h-10 text-foreground/80 mb-6 stroke-1" />
-            <h3 className="text-2xl font-serif text-foreground mb-3">Entity Management</h3>
-            <p className="text-foreground-muted font-light leading-relaxed">
+            <Building2 className="w-10 h-10 text-foreground/80 mb-6 stroke-1" aria-hidden="true" />
+            <h3 className="text-2xl font-serif text-foreground mb-3 font-normal">Entity Management</h3>
+            <p className="text-foreground-muted font-normal leading-relaxed font-brand">
               Centralized hierarchy for parent-child vendor relationships.
             </p>
           </div>
 
           {/* Feature 4 - Global Compliance */}
           <div className="md:col-span-8 bg-background p-8 md:p-12 hover:bg-background-hover transition-colors group">
-            <Globe className="w-10 h-10 text-foreground/80 mb-6 stroke-1" />
-            <h3 className="text-3xl font-serif text-foreground mb-3">Global Compliance</h3>
-            <p className="text-foreground-muted font-light leading-relaxed max-w-lg mb-6">
-              Where <strong className="text-foreground font-normal">Nexus</strong> (connections) and <strong className="text-foreground font-normal">Canon</strong> (regulations) achieve balance.
+            <Globe className="w-10 h-10 text-foreground/80 mb-6 stroke-1" aria-hidden="true" />
+            <h3 className="text-3xl font-serif text-foreground mb-3 font-normal">Global Compliance</h3>
+            <p className="text-foreground-muted font-normal leading-relaxed max-w-lg mb-6 font-brand">
+              Where <strong className="text-foreground font-normal">Nexus</strong> (connections) and{" "}
+              <strong className="text-foreground font-normal">Canon</strong> (regulations) achieve balance.
               Real-time mapping of compliance frameworks across your vendor network.
             </p>
             <div className="flex flex-wrap gap-2">
-              {['GDPR', 'CCPA', 'ISO 27001'].map(tag => (
+              {["GDPR", "CCPA", "ISO 27001"].map((tag) => (
                 <StatusBadge key={tag} text={tag} />
               ))}
             </div>
@@ -398,30 +259,30 @@ export default function NexusCanonLanding() {
       {/* SECURITY SECTION */}
       <Section id="security" className="py-24 scroll-mt-20">
         <div className="mb-12">
-          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
+          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground font-normal">
             Security <span className="text-foreground/30 italic">First.</span>
           </h2>
           <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="border border-border bg-background-elevated/50 p-8">
-            <Lock className="w-8 h-8 text-foreground/80 mb-4 stroke-1" />
-            <h3 className="text-xl font-serif text-foreground mb-3">Zero-Trust Architecture</h3>
-            <p className="text-sm text-foreground-muted font-light leading-relaxed">
+            <Lock className="w-8 h-8 text-foreground/80 mb-4 stroke-1" aria-hidden="true" />
+            <h3 className="text-xl font-serif text-foreground mb-3 font-normal">Zero-Trust Architecture</h3>
+            <p className="text-sm text-foreground-muted font-normal leading-relaxed font-brand">
               Every access request is verified, regardless of origin. No implicit trust assumptions.
             </p>
           </div>
           <div className="border border-border bg-background-elevated/50 p-8">
-            <ShieldCheck className="w-8 h-8 text-foreground/80 mb-4 stroke-1" />
-            <h3 className="text-xl font-serif text-foreground mb-3">Compliance Certified</h3>
-            <p className="text-sm text-foreground-muted font-light leading-relaxed">
+            <ShieldCheck className="w-8 h-8 text-foreground/80 mb-4 stroke-1" aria-hidden="true" />
+            <h3 className="text-xl font-serif text-foreground mb-3 font-normal">Compliance Certified</h3>
+            <p className="text-sm text-foreground-muted font-normal leading-relaxed font-brand">
               SOC 2 Type II, ISO 27001, GDPR compliant. Regular security audits and penetration testing.
             </p>
           </div>
           <div className="border border-border bg-background-elevated/50 p-8">
-            <Fingerprint className="w-8 h-8 text-foreground/80 mb-4 stroke-1" />
-            <h3 className="text-xl font-serif text-foreground mb-3">Immutable Audit Trails</h3>
-            <p className="text-sm text-foreground-muted font-light leading-relaxed">
+            <Fingerprint className="w-8 h-8 text-foreground/80 mb-4 stroke-1" aria-hidden="true" />
+            <h3 className="text-xl font-serif text-foreground mb-3 font-normal">Immutable Audit Trails</h3>
+            <p className="text-sm text-foreground-muted font-normal leading-relaxed font-brand">
               Blockchain-backed logs ensure complete transparency and non-repudiation of all actions.
             </p>
           </div>
@@ -440,18 +301,18 @@ export default function NexusCanonLanding() {
               Secure Your Supply Chain
             </span>
           </div>
-          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
+          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground font-normal">
             Secure your <span className="text-foreground/30 italic">supply chain.</span>
           </h2>
-          <p className="text-lg text-foreground-muted font-light leading-relaxed max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-foreground-muted font-normal leading-relaxed max-w-2xl mx-auto mb-8 font-brand">
             Join the world's most regulated organizations in achieving institutional-grade vendor governance.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/signup">
-              <Button className="py-4 px-10">Book Strategic Demo</Button>
+              <LandingButton className="py-4 px-10">Book Strategic Demo</LandingButton>
             </Link>
             <Link href="/docs">
-              <Button variant="outline" className="py-4 px-10">View Documentation</Button>
+              <LandingButton variant="outline" className="py-4 px-10">View Documentation</LandingButton>
             </Link>
           </div>
         </div>
@@ -470,16 +331,33 @@ export default function NexusCanonLanding() {
                 <BrandName variant="compact" />
               </div>
             </div>
-            <p className="text-xs text-foreground-subtle max-w-md text-center leading-relaxed">
+            <p className="text-xs text-foreground-subtle max-w-md text-center leading-relaxed font-brand font-normal">
               Institutional-grade vendor governance for the world's most regulated organizations.
             </p>
             <div className="pt-4 border-t border-border w-full flex flex-col md:flex-row justify-between items-center gap-2">
-              <p className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest">© 2024 NexusCanon Governance Systems</p>
-              <div className="flex gap-3">
-                <Link href="/privacy" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Privacy</Link>
-                <Link href="/terms" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Terms</Link>
-                <Link href="/security" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Security</Link>
-              </div>
+              <p className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest font-normal">
+                © 2024 NexusCanon Governance Systems
+              </p>
+              <nav className="flex gap-3" aria-label="Footer navigation">
+                <Link
+                  href="/privacy"
+                  className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors font-normal"
+                >
+                  Privacy
+                </Link>
+                <Link
+                  href="/terms"
+                  className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors font-normal"
+                >
+                  Terms
+                </Link>
+                <Link
+                  href="/security"
+                  className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors font-normal"
+                >
+                  Security
+                </Link>
+              </nav>
             </div>
           </div>
         </div>

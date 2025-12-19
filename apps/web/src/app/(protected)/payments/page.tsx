@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PaymentsList } from "@/components/payments/PaymentsList";
 import { Card } from "@aibos/ui";
 
+
 // Force dynamic rendering since this page requires authentication and API calls
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: "Payments",
   description: "Track payment history, status, and manage payment records",
   openGraph: {
-    title: "Payments | AI-BOS Vendor Portal",
+    title: "Payments",
     description: "Track payment history, status, and manage payment records",
   },
 };
@@ -29,7 +30,7 @@ function PaymentsLoading() {
 export default function PaymentsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-foreground">Payments</h1>
+      <h1 className="text-3xl font-serif text-foreground mb-8 font-normal">Payments</h1>
 
       <Suspense fallback={<PaymentsLoading />}>
         <PaymentsList />

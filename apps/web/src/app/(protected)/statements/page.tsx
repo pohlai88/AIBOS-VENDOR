@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { StatementsList } from "@/components/statements/StatementsList";
 import { Card } from "@aibos/ui";
 
+
 // Force dynamic rendering since this page requires authentication and API calls
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: "Financial Statements",
   description: "View and export your financial statements and transaction history",
   openGraph: {
-    title: "Financial Statements | AI-BOS Vendor Portal",
+    title: "Financial Statements",
     description: "View and export your financial statements and transaction history",
   },
 };
@@ -29,7 +30,7 @@ function StatementsLoading() {
 export default function StatementsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-foreground">Financial Statements</h1>
+      <h1 className="text-3xl font-serif text-foreground mb-8 font-normal">Financial Statements</h1>
 
       <Suspense fallback={<StatementsLoading />}>
         <StatementsList />

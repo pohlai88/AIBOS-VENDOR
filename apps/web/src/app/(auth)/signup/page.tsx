@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button, Input } from "@aibos/ui";
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { AuthPageLayout } from "@/components/auth/AuthPageLayout";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { FormField } from "@/components/auth/FormField";
+import { useAuthForm } from "@/hooks/useAuthForm";
+import type { SignupFormData } from "@/types/auth";
 
 export default function SignupPage() {
-  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,54 +18,56 @@ export default function SignupPage() {
   const [tenantOption, setTenantOption] = useState<"join" | "create" | "default">("default");
   const [tenantSlug, setTenantSlug] = useState("");
   const [tenantName, setTenantName] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const { loading, error, submit } = useAuthForm<SignupFormData>({
+    endpoint: "/api/auth/signup",
+    redirectTo: "/dashboard",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          organizationName,
-          role,
-          tenantSlug: tenantOption === "join" ? tenantSlug : undefined,
-          tenantName: tenantOption === "create" ? tenantName : undefined,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Signup failed");
-        setLoading(false);
-        return;
-      }
-
-      router.push("/dashboard");
-      router.refresh();
-    } catch (err) {
-      setError("An unexpected error occurred");
-      setLoading(false);
-    }
+    await submit({
+      email,
+      password,
+      organizationName,
+      role,
+      tenantSlug: tenantOption === "join" ? tenantSlug : undefined,
+      tenantName: tenantOption === "create" ? tenantName : undefined,
+    });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <AuthPageLayout>
       <div className="w-full max-w-md">
-        <div className="bg-background-elevated border border-border rounded-lg p-8">
-          <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-3 font-normal">
             Create Account
           </h1>
+          <p className="text-sm text-foreground-muted font-normal font-brand">
+            Join the world's most regulated organizations
+          </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
+        <div className="bg-background-elevated border border-border p-8 md:p-12">
+
+          <AuthForm
+            title=""
+            subtitle=""
+            error={error}
+            onSubmit={handleSubmit}
+            footer={
+              <div className="text-sm text-foreground-muted font-brand font-normal">
+                Already have an account?{" "}
+                <Link
+                  href="/login"
+                  className="text-foreground hover:underline transition-colors"
+                >
+                  Sign in
+                </Link>
+              </div>
+            }
+          >
+            <FormField
               type="email"
               label="Email"
               value={email}
@@ -72,7 +77,7 @@ export default function SignupPage() {
               autoComplete="email"
             />
 
-            <Input
+            <FormField
               type="password"
               label="Password"
               value={password}
@@ -83,7 +88,7 @@ export default function SignupPage() {
               minLength={8}
             />
 
-            <Input
+            <FormField
               type="text"
               label="Organization Name"
               value={organizationName}
@@ -93,14 +98,15 @@ export default function SignupPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1 font-brand font-normal">
                 Account Type
               </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as "vendor" | "company")}
-                className="w-full px-4 py-2 bg-background-elevated border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-transparent"
+                className="w-full px-4 py-2 bg-background-elevated border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 font-brand font-normal"
                 disabled={loading}
+                aria-label="Account type"
               >
                 <option value="vendor">Vendor</option>
                 <option value="company">Company</option>
@@ -108,14 +114,17 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1 font-brand font-normal">
                 Tenant
               </label>
               <select
                 value={tenantOption}
-                onChange={(e) => setTenantOption(e.target.value as "join" | "create" | "default")}
-                className="w-full px-4 py-2 bg-background-elevated border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-transparent mb-2"
+                onChange={(e) =>
+                  setTenantOption(e.target.value as "join" | "create" | "default")
+                }
+                className="w-full px-4 py-2 bg-background-elevated border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 mb-2 font-brand font-normal"
                 disabled={loading}
+                aria-label="Tenant option"
               >
                 <option value="default">Use Default Tenant</option>
                 <option value="join">Join Existing Tenant</option>
@@ -123,7 +132,7 @@ export default function SignupPage() {
               </select>
 
               {tenantOption === "join" && (
-                <Input
+                <FormField
                   type="text"
                   label="Tenant Slug"
                   value={tenantSlug}
@@ -135,7 +144,7 @@ export default function SignupPage() {
               )}
 
               {tenantOption === "create" && (
-                <Input
+                <FormField
                   type="text"
                   label="Tenant Name"
                   value={tenantName}
@@ -147,35 +156,18 @@ export default function SignupPage() {
               )}
             </div>
 
-            {error && (
-              <div className="bg-error-900/50 border border-error-700 text-error-200 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <Button
+            <button
               type="submit"
-              className="w-full"
               disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-foreground text-background border border-foreground hover:bg-foreground/90 transition-all duration-base text-xs font-normal uppercase tracking-[0.2em] disabled:opacity-50 disabled:cursor-not-allowed group font-brand"
             >
               {loading ? "Creating account..." : "Sign Up"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <div className="text-sm text-foreground-muted">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="text-primary-400 hover:text-primary-300"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
+              <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </AuthForm>
         </div>
       </div>
-    </div>
+    </AuthPageLayout>
   );
 }
 

@@ -103,9 +103,19 @@ export function sanitizeProps<T>(obj: T): T {
       // Handle class instances (convert to plain object if possible, otherwise skip)
       if (isClassInstance(value)) {
         // Try to convert to plain object if it has common serialization methods
-        if ('toJSON' in value && typeof (value as { toJSON: () => unknown }).toJSON === 'function') {
-          sanitized[key] = sanitizeProps((value as { toJSON: () => unknown }).toJSON());
-          continue;
+        const valueWithToJSON = value as { toJSON?: () => unknown };
+        if (valueWithToJSON.toJSON && typeof valueWithToJSON.toJSON === 'function') {
+          try {
+            const jsonValue = valueWithToJSON.toJSON();
+            if (jsonValue && typeof jsonValue === 'object' && !Array.isArray(jsonValue) && jsonValue !== null) {
+              sanitized[key] = sanitizeProps(jsonValue as Record<string, unknown>);
+            } else {
+              sanitized[key] = jsonValue;
+            }
+            continue;
+          } catch {
+            // Skip if toJSON fails
+          }
         }
 
         // If it's a Map or Set, convert to plain object/array

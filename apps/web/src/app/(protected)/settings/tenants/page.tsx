@@ -6,7 +6,7 @@ import { TenantManagementClient } from "@/components/settings/TenantManagementCl
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Tenant Management | AI-BOS Vendor Portal",
+  title: "Tenant Management",
   description: "Manage your tenant settings and subscription",
 };
 
