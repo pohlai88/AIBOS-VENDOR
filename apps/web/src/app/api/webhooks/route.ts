@@ -5,6 +5,12 @@ import { logError } from "@/lib/logger";
 import { logDataModification } from "@/lib/audit-log";
 import crypto from "crypto";
 
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/webhooks - List webhooks for organization
  */

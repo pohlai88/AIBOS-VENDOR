@@ -6,9 +6,12 @@ import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { logError } from "@/lib/logger";
 import { validateRequest, paymentCreateSchema } from "@/lib/validation";
 
-// Route segment config for caching
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // 5 minutes for payments
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,6 +27,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("payments")
       .select("id, organization_id, vendor_id, invoice_id, amount, currency, status, method, transaction_id, paid_at, due_date, created_at, updated_at", { count: "exact" })
+      .eq("tenant_id", user.tenantId) // Explicit tenant filter
       .order("created_at", { ascending: false });
 
     // Apply filters based on user role and access
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Company users can see all payments in their org + vendor payments
       query = query.or(
-        `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active)`
+        `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active and tenant_id.eq.${user.tenantId})`
       );
     }
 
@@ -101,6 +105,7 @@ export async function POST(request: NextRequest) {
       .from("payments")
       .insert({
         organization_id: user.organizationId,
+        tenant_id: user.tenantId, // Required for multi-tenant
         vendor_id: validatedBody.vendorId,
         invoice_id: validatedBody.invoiceId || null,
         amount: validatedBody.amount,

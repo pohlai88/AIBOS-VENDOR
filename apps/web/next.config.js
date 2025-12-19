@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@aibos/ui", "@aibos/shared", "@aibos/database", "@aibos/config"],
+
+  // Enable instrumentation hook for observability
+  experimental: {
+    instrumentationHook: true,
+    optimizePackageImports: ["@aibos/ui", "@aibos/shared"],
+  },
+
   // Disable Turbopack for Windows compatibility (symlink permission issues)
   // Use webpack for both dev and build
 

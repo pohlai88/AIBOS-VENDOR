@@ -6,9 +6,12 @@ import { logDocumentAccess } from "@/lib/documents";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { logError } from "@/lib/logger";
 
-// Route segment config for caching
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
+export const runtime = "nodejs";
 
 export async function GET(
   _request: NextRequest,

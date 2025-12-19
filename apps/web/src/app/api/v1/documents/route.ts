@@ -5,9 +5,10 @@ import { getAPIVersion, addVersionHeaders, getVersionInfo, createVersionedErrorR
 import { logApiRequest } from "@/lib/audit-log";
 import { trackAPICall } from "@/lib/apm";
 
-// Route segment config for caching
+// Route segment config following Next.js 16 best practices
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const version = getAPIVersion(request);
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
       let query = supabase
         .from("documents")
         .select("id, name, type, category, file_url, file_size, mime_type, organization_id, vendor_id, is_shared, version, created_at, updated_at, created_by", { count: "exact" })
+        .eq("tenant_id", user.tenantId) // Explicit tenant filter
         .or(`organization_id.eq.${user.organizationId},and(vendor_id.eq.${user.organizationId},is_shared.eq.true)`);
 
       if (category) {

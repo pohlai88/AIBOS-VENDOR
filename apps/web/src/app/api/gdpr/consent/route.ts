@@ -3,6 +3,12 @@ import { requireAuth } from "@/lib/auth";
 import { recordPrivacyPolicyAcceptance, getUserConsentStatus } from "@/lib/gdpr";
 import { logError } from "@/lib/logger";
 
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/gdpr/consent - Get user consent status
  */

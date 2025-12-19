@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleSSOCallback } from "@/lib/auth/sso";
 import { logError } from "@/lib/logger";
+import { createClient } from "@/lib/supabase/server";
+
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 /**
  * GET /api/auth/saml/initiate - Initiate SAML authentication
@@ -18,16 +23,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // This would generate SAML AuthnRequest
-    // For now, return placeholder redirect
-    // In production, this would:
-    // 1. Generate SAML AuthnRequest using @node-saml/node-saml
-    // 2. Redirect to IdP SSO URL
-    
-    return NextResponse.json({
-      message: "SAML authentication not fully implemented",
-      note: "Install @node-saml/node-saml and configure SAML providers",
+    // Get provider configuration
+    const supabase = await createClient();
+    const { data: provider, error: providerError } = await supabase
+      .from("sso_providers")
+      .select("*")
+      .eq("id", providerId)
+      .eq("enabled", true)
+      .single();
+
+    if (providerError || !provider) {
+      return NextResponse.json(
+        { error: "SAML provider not found or disabled" },
+        { status: 404 }
+      );
+    }
+
+    if (provider.type !== "saml") {
+      return NextResponse.json(
+        { error: "Provider is not a SAML provider" },
+        { status: 400 }
+      );
+    }
+
+    const { SAML } = await import("@node-saml/node-saml");
+
+    const saml = new SAML({
+      callbackUrl: provider.metadata.callbackUrl as string,
+      entryPoint: provider.metadata.entryPoint as string,
+      issuer: provider.metadata.issuer as string,
+      idpCert: provider.metadata.cert as string,
     });
+
+    const relayState = Buffer.from(JSON.stringify({ providerId, requestId })).toString("base64");
+    const authnRequest = await saml.getAuthorizeUrlAsync(relayState, undefined, {});
+
+    return NextResponse.redirect(authnRequest);
   } catch (error) {
     logError("SAML initiation error", error);
     return NextResponse.json(

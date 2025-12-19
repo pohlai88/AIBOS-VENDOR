@@ -4,9 +4,10 @@ import { requireAuth } from "@/lib/auth";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { logError } from "@/lib/logger";
 
-// Route segment config for caching
+// Route segment config following Next.js 16 best practices
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // Revalidate every 60 seconds
+export const runtime = "nodejs";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -24,7 +25,8 @@ export async function GET(_request: NextRequest) {
       (async () => {
         let documentsQuery = supabase
           .from("documents")
-          .select("id", { count: "exact", head: true });
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", user.tenantId); // Explicit tenant filter
 
         if (user.role === "vendor") {
           documentsQuery = documentsQuery.or(
@@ -32,7 +34,7 @@ export async function GET(_request: NextRequest) {
           );
         } else {
           documentsQuery = documentsQuery.or(
-            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active)`
+            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active and tenant_id.eq.${user.tenantId})`
           );
         }
 
@@ -43,13 +45,14 @@ export async function GET(_request: NextRequest) {
       (async () => {
         let paymentsQuery = supabase
           .from("payments")
-          .select("amount, status");
+          .select("amount, status")
+          .eq("tenant_id", user.tenantId); // Explicit tenant filter
 
         if (user.role === "vendor") {
           paymentsQuery = paymentsQuery.eq("vendor_id", user.organizationId);
         } else {
           paymentsQuery = paymentsQuery.or(
-            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active)`
+            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active and tenant_id.eq.${user.tenantId})`
           );
         }
 
@@ -60,7 +63,8 @@ export async function GET(_request: NextRequest) {
       (async () => {
         let statementsQuery = supabase
           .from("statements")
-          .select("id", { count: "exact", head: true });
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", user.tenantId); // Explicit tenant filter
 
         if (user.role === "vendor") {
           statementsQuery = statementsQuery.or(
@@ -68,7 +72,7 @@ export async function GET(_request: NextRequest) {
           );
         } else {
           statementsQuery = statementsQuery.or(
-            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active)`
+            `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active and tenant_id.eq.${user.tenantId})`
           );
         }
 
@@ -79,7 +83,8 @@ export async function GET(_request: NextRequest) {
       (async () => {
         let threadsQuery = supabase
           .from("message_threads")
-          .select("id, last_message_at");
+          .select("id, last_message_at")
+          .eq("tenant_id", user.tenantId); // Explicit tenant filter
 
         if (user.role === "vendor") {
           threadsQuery = threadsQuery.eq("vendor_id", user.organizationId);
@@ -97,6 +102,7 @@ export async function GET(_request: NextRequest) {
         const { count } = await supabase
           .from("messages")
           .select("id", { count: "exact", head: true })
+          .eq("tenant_id", user.tenantId) // Explicit tenant filter
           .in(
             "thread_id",
             threads.map((t) => t.id)

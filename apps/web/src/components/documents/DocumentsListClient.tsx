@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, memo } from "react";
+import { useState, useMemo, useCallback, memo, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Table, Card, Button, Modal } from "@aibos/ui";
 import type { TableColumn } from "@aibos/ui";
@@ -23,7 +23,22 @@ export const DocumentsListClient = memo(function DocumentsListClient({
   pagination: PaginationInfo;
 }) {
   const router = useRouter();
-  const [documents, setDocuments] = useState<Document[]>(initialDocuments);
+  const [isPending, startTransition] = useTransition();
+
+  // Use optimistic updates for better UX (Next.js 16 best practice)
+  const [optimisticDocuments, setOptimisticDocuments] = useOptimistic(
+    initialDocuments,
+    (state: Document[], action: { type: 'delete'; id: string } | { type: 'add'; document: Document }) => {
+      if (action.type === 'delete') {
+        return state.filter((doc) => doc.id !== action.id);
+      }
+      if (action.type === 'add') {
+        return [action.document, ...state];
+      }
+      return state;
+    }
+  );
+
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -34,34 +49,38 @@ export const DocumentsListClient = memo(function DocumentsListClient({
   const handleDelete = useCallback(async (documentId: string) => {
     if (!confirm("Are you sure you want to delete this document?")) return;
 
-    // Optimistic update
-    const previousDocuments = documents;
-    setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
+    // Optimistic update with useOptimistic (Next.js 16 best practice)
+    startTransition(async () => {
+      setOptimisticDocuments({ type: 'delete', id: documentId });
 
-    try {
-      const response = await fetch(`/api/documents/${documentId}`, {
-        method: "DELETE",
-      });
+      try {
+        // Use Server Action instead of API route
+        const { deleteDocument } = await import("@/app/actions/documents");
+        const formData = new FormData();
+        formData.append("id", documentId);
 
-      if (!response.ok) {
-        // Revert on error
-        setDocuments(previousDocuments);
-        alert("Failed to delete document");
-      } else {
-        // Track analytics after successful delete
-        import("@/lib/analytics")
-          .then(({ trackDocumentAction }) => trackDocumentAction("delete", documentId))
-          .catch(() => { }); // Don't block on analytics errors
+        const result = await deleteDocument(formData);
 
-        // Refresh to update pagination (better UX than full reload)
+        if (!result.success) {
+          // Revert optimistic update on error by refreshing
+          router.refresh();
+          alert(result.error || "Failed to delete document");
+        } else {
+          // Track analytics after successful delete
+          import("@/lib/analytics")
+            .then(({ trackDocumentAction }) => trackDocumentAction("delete", documentId))
+            .catch(() => { }); // Don't block on analytics errors
+
+          // Refresh to update pagination (optimistic update already applied)
+          router.refresh();
+        }
+      } catch (error) {
+        // Revert optimistic update on error
         router.refresh();
+        alert("Failed to delete document");
       }
-    } catch (error) {
-      // Revert on error
-      setDocuments(previousDocuments);
-      alert("Failed to delete document");
-    }
-  }, [documents, router]);
+    });
+  }, [router, setOptimisticDocuments]);
 
   const handleViewDetails = useCallback((doc: Document) => {
     setSelectedDocument(doc);
@@ -139,7 +158,7 @@ export const DocumentsListClient = memo(function DocumentsListClient({
       <Card>
         <Table
           columns={columns}
-          data={documents}
+          data={optimisticDocuments}
           emptyMessage="No documents found"
         />
 

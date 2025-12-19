@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./lib/supabase/middleware";
 import { checkRateLimit, getRateLimitHeaders, type RateLimitTier } from "./lib/rate-limit";
+import { getRequestId } from "./lib/request-id";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -10,11 +11,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Get or create request ID (propagate if present, generate if not)
+  const requestId = getRequestId(request);
+
   // Determine rate limit tier based on path
   let tier: RateLimitTier = "public";
 
   // Check if route is authenticated (protected routes)
-  if (path.startsWith("/api/") && !path.startsWith("/api/auth/login") && !path.startsWith("/api/auth/signup")) {
+  // Exclude public auth routes from authenticated tier
+  if (path.startsWith("/api/") &&
+    !path.startsWith("/api/auth/login") &&
+    !path.startsWith("/api/auth/signup") &&
+    !path.startsWith("/api/auth/oauth") &&
+    !path.startsWith("/api/auth/health")) {
     tier = "authenticated";
   }
 
@@ -32,10 +41,18 @@ export async function middleware(request: NextRequest) {
   // If rate limit exceeded, return 429
   if (!rateLimitResult.success) {
     const headers = getRateLimitHeaders(rateLimitResult);
+    // Set request ID in response header for correlation
+    headers.set('x-request-id', requestId);
+
     return NextResponse.json(
       {
-        error: "Too many requests",
-        message: "Rate limit exceeded. Please try again later.",
+        ok: false,
+        error: {
+          code: "RATE_LIMIT_EXCEEDED",
+          kind: "rate_limit",
+          message: "Rate limit exceeded. Please try again later.",
+          requestId,
+        },
         retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
       },
       {
@@ -53,6 +70,9 @@ export async function middleware(request: NextRequest) {
   Object.entries(rateLimitHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+
+  // Set request ID in response header for correlation across proxies/APM
+  response.headers.set('x-request-id', requestId);
 
   return response;
 }

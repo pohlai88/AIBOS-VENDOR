@@ -2,6 +2,12 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { validateRequest, loginSchema } from "@/lib/validation";
+import { logError } from "@/lib/logger";
+
+// Route segment config following Next.js 16 best practices
+// Public auth route - can be cached briefly
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +30,14 @@ export async function POST(request: NextRequest) {
       session: data.session,
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Auth Login API Error]", error, {
+      path: "/api/auth/login",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Login failed"),
+      500,
+      "LOGIN_ERROR"
+    );
   }
 }
 

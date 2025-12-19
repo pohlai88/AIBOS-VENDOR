@@ -5,6 +5,10 @@ import { validateRequest, passwordChangeSchema } from "@/lib/validation";
 import { requireAuth } from "@/lib/auth";
 import { logError } from "@/lib/logger";
 
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -60,6 +64,13 @@ export async function POST(request: NextRequest) {
       message: "Password changed successfully",
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Auth Password API Error]", error, {
+      path: "/api/auth/password",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Password change failed"),
+      500,
+      "PASSWORD_CHANGE_ERROR"
+    );
   }
 }

@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 
-// Route segment config
+// Route segment config following Next.js 16 best practices
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +25,14 @@ export async function POST(request: NextRequest) {
 
     return createSuccessResponse({ success: true });
   } catch (error) {
-    return createErrorResponse(error);
+    const { logError } = await import("@/lib/logger");
+    logError("[Analytics Event API Error]", error, {
+      path: "/api/analytics/event",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Failed to log event"),
+      500,
+      "ANALYTICS_ERROR"
+    );
   }
 }

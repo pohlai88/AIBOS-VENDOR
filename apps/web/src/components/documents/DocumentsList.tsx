@@ -1,50 +1,15 @@
 import { DocumentsListClient } from "./DocumentsListClient";
 import { DocumentsSearch } from "./DocumentsSearch";
-import { getAppUrl } from "@/lib/env";
 import { Suspense } from "react";
+import { getDocuments } from "@/lib/data-fetching";
 
-async function fetchDocuments(
-  search: string,
-  category: string,
-  page: number,
-  sortBy: string,
-  sortOrder: string
-) {
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  if (category) params.set("category", category);
-  params.set("page", page.toString());
-  params.set("limit", "10");
-  if (sortBy) params.set("sortBy", sortBy);
-  if (sortOrder) params.set("sortOrder", sortOrder);
-
-  const response = await fetch(
-    `${getAppUrl()}/api/documents?${params.toString()}`,
-    {
-      next: {
-        revalidate: 60,
-        tags: ["documents"],
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to load documents");
-  }
-
-  const data = await response.json();
-
-  return {
-    documents: data.documents || [],
-    pagination: data.pagination || {
-      currentPage: page,
-      totalPages: 1,
-      totalItems: 0,
-      itemsPerPage: 10,
-    },
-  };
-}
-
+/**
+ * Server Component: DocumentsList
+ * Follows Next.js 16 best practices:
+ * - Direct database access (no API route call)
+ * - Uses React cache() for request memoization
+ * - Proper error handling
+ */
 export async function DocumentsList({
   searchParams,
 }: {
@@ -57,16 +22,18 @@ export async function DocumentsList({
   const category = params.get("category") || "";
   const page = parseInt(params.get("page") || "1", 10);
   const sortBy = params.get("sortBy") || "created_at";
-  const sortOrder = params.get("sortOrder") || "desc";
+  const sortOrder = (params.get("sortOrder") || "desc") as "asc" | "desc";
 
   try {
-    const { documents, pagination } = await fetchDocuments(
-      search,
-      category,
+    // Use direct database access with caching (best practice)
+    const { documents, pagination } = await getDocuments({
+      search: search || undefined,
+      category: category || undefined,
       page,
       sortBy,
-      sortOrder
-    );
+      sortOrder,
+      limit: 10,
+    });
 
     return (
       <>
@@ -91,7 +58,7 @@ export async function DocumentsList({
   } catch (error) {
     return (
       <div className="bg-error-900/50 border border-error-700 text-error-200 px-4 py-3 rounded-lg">
-        Failed to load documents
+        {error instanceof Error ? error.message : "Failed to load documents"}
       </div>
     );
   }

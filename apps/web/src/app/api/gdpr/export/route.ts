@@ -4,6 +4,12 @@ import { exportUserData } from "@/lib/gdpr";
 import { logError, logInfo } from "@/lib/logger";
 import { logDataAccess } from "@/lib/audit-log";
 
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/gdpr/export - Export user data (GDPR right to access)
  */

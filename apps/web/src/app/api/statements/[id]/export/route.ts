@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

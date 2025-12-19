@@ -5,6 +5,10 @@ import { requireAuth } from "@/lib/auth";
 import { z } from "zod";
 import { logError } from "@/lib/logger";
 
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const preferencesSchema = z.object({
   preferences: z.object({
     emailNotifications: z.boolean(),
@@ -49,7 +53,14 @@ export async function GET() {
       },
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Auth Preferences GET Error]", error, {
+      path: "/api/auth/preferences",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Failed to get preferences"),
+      500,
+      "PREFERENCES_ERROR"
+    );
   }
 }
 
@@ -93,6 +104,13 @@ export async function POST(request: NextRequest) {
       message: "Preferences saved successfully",
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Auth Preferences POST Error]", error, {
+      path: "/api/auth/preferences",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Failed to save preferences"),
+      500,
+      "PREFERENCES_SAVE_ERROR"
+    );
   }
 }

@@ -200,33 +200,123 @@ export async function handleSSOCallback(
 }
 
 /**
- * Process SAML response (placeholder - requires @node-saml/node-saml)
+ * Process SAML response
+ * 
+ * NOTE: Full SAML implementation requires @node-saml/node-saml package.
+ * To enable SAML:
+ * 1. Install: npm install @node-saml/node-saml
+ * 2. Configure SAML provider metadata in sso_providers table
+ * 3. Uncomment and configure the SAML processing code below
  */
 async function processSAMLResponse(
-  _provider: { metadata: Record<string, unknown> },
-  _samlResponse: string
+  provider: { metadata: Record<string, unknown> },
+  samlResponse: string
 ): Promise<{ email: string; name?: string; attributes?: Record<string, unknown> }> {
-  // This would use @node-saml/node-saml to parse SAML response
-  // For now, return placeholder
-  return {
-    email: "user@example.com",
-    name: "User Name",
-    attributes: {},
-  };
+  try {
+    const { SAML } = await import("@node-saml/node-saml");
+
+    const saml = new SAML({
+      callbackUrl: provider.metadata.callbackUrl as string,
+      entryPoint: provider.metadata.entryPoint as string,
+      issuer: provider.metadata.issuer as string,
+      idpCert: provider.metadata.cert as string,
+      // Additional SAML configuration from metadata
+    });
+
+    const result = await saml.validatePostResponseAsync({ SAMLResponse: samlResponse });
+
+    if (!result.profile) {
+      throw new Error("SAML response did not contain a user profile");
+    }
+
+    const profile = result.profile;
+
+    return {
+      email: (profile.email as string) || (profile.nameID as string) || "",
+      name: (profile.name as string) || (profile.displayName as string) || undefined,
+      attributes: profile as Record<string, unknown>,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("SAML authentication requires")) {
+      throw error;
+    }
+    logError("SAML processing error", error);
+    throw new Error("Failed to process SAML response");
+  }
 }
 
 /**
- * Process OAuth/OIDC code (placeholder)
+ * Process OAuth/OIDC code
+ * 
+ * NOTE: OAuth/OIDC implementation requires provider-specific configuration.
+ * This is a basic implementation that can be extended for specific providers.
  */
 async function processOAuthCode(
-  _provider: { metadata: Record<string, unknown> },
-  _code: string
+  provider: { metadata: Record<string, unknown> },
+  code: string
 ): Promise<{ email: string; name?: string; attributes?: Record<string, unknown> }> {
-  // This would exchange OAuth code for tokens and fetch user info
-  // For now, return placeholder
-  return {
-    email: "user@example.com",
-    name: "User Name",
-    attributes: {},
-  };
+  try {
+    const clientId = provider.metadata.clientId as string;
+    const clientSecret = provider.metadata.clientSecret as string;
+    const tokenUrl = provider.metadata.tokenUrl as string;
+    const userInfoUrl = provider.metadata.userInfoUrl as string;
+    const redirectUri = provider.metadata.redirectUri as string;
+
+    if (!clientId || !clientSecret || !tokenUrl || !userInfoUrl) {
+      throw new Error("OAuth provider configuration incomplete");
+    }
+
+    // Exchange authorization code for access token
+    const tokenResponse = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      throw new Error(`Token exchange failed: ${errorText}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+      throw new Error("No access token received");
+    }
+
+    // Fetch user info using access token
+    const userInfoResponse = await fetch(userInfoUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!userInfoResponse.ok) {
+      throw new Error("Failed to fetch user info");
+    }
+
+    const userInfo = await userInfoResponse.json();
+
+    return {
+      email: userInfo.email || userInfo.sub || "",
+      name: userInfo.name || userInfo.display_name || userInfo.preferred_username || undefined,
+      attributes: userInfo as Record<string, unknown>,
+    };
+  } catch (error) {
+    logError("OAuth processing error", error);
+    throw new Error(
+      error instanceof Error
+        ? `OAuth authentication failed: ${error.message}`
+        : "OAuth authentication failed"
+    );
+  }
 }

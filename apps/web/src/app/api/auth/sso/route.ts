@@ -3,6 +3,10 @@ import { initiateSSO, handleSSOCallback } from "@/lib/auth/sso";
 import { logError } from "@/lib/logger";
 import { logSecurityEvent } from "@/lib/audit-log";
 
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/auth/sso - Initiate SSO login
  */

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Custom error class for application errors
+ * @deprecated Prefer using structured error responses from lib/api-utils
+ * This is kept for backward compatibility
+ */
 export class AppError extends Error {
   constructor(
     message: string,
@@ -11,43 +16,29 @@ export class AppError extends Error {
   }
 }
 
+/**
+ * Create error response (legacy version)
+ * @deprecated Use createErrorResponse from lib/api-utils for consistency
+ * This function is kept for backward compatibility but routes should migrate to api-utils
+ */
 export function createErrorResponse(
   error: unknown,
   statusCode?: number,
   code?: string
 ): NextResponse {
-  if (error instanceof AppError) {
-    return NextResponse.json(
-      {
-        error: error.message,
-        code: error.code,
-      },
-      { status: error.statusCode }
-    );
-  }
-
-  if (error instanceof Error) {
-    console.error("API Error:", error.message, error.stack);
-    return NextResponse.json(
-      {
-        error: error.message || "Internal server error",
-        code: code,
-      },
-      { status: statusCode || 500 }
-    );
-  }
-
-  console.error("Unknown error:", error);
-  return NextResponse.json(
-    {
-      error: "Internal server error",
-      code: code,
-    },
-    { status: statusCode || 500 }
-  );
+  // Re-export from api-utils for consistency
+  const { createErrorResponse: createErrorResponseNew } = require('@/lib/api-utils')
+  return createErrorResponseNew(error, statusCode || 500, code)
 }
 
+/**
+ * Create success response (legacy version)
+ * @deprecated Use createSuccessResponse from lib/api-utils for consistency
+ * This function is kept for backward compatibility but routes should migrate to api-utils
+ */
 export function createSuccessResponse<T>(data: T, status: number = 200): NextResponse {
-  return NextResponse.json(data, { status });
+  // Re-export from api-utils for consistency
+  const { createSuccessResponse: createSuccessResponseNew } = require('@/lib/api-utils')
+  return createSuccessResponseNew(data)
 }
 

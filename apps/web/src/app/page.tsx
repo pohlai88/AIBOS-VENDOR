@@ -305,8 +305,36 @@ export default function NexusCanonLanding() {
         </div>
       </div>
 
-      {/* FEATURES GRID */}
-      <Section className="py-24">
+      {/* PLATFORM SECTION */}
+      <Section id="platform" className="py-24 scroll-mt-20">
+        <div className="mb-12">
+          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
+            Platform <span className="text-foreground/30 italic">Capabilities.</span>
+          </h2>
+          <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
+        </div>
+        <p className="text-lg text-foreground-muted font-light leading-relaxed max-w-3xl mb-12">
+          Comprehensive vendor governance platform designed for institutional-grade operations.
+          Manage procurement, compliance, and risk mitigation from a single, unified terminal.
+        </p>
+      </Section>
+
+      {/* INTELLIGENCE SECTION */}
+      <Section id="intelligence" className="py-24 scroll-mt-20">
+        <div className="mb-12">
+          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
+            Intelligence <span className="text-foreground/30 italic">Insights.</span>
+          </h2>
+          <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
+        </div>
+        <p className="text-lg text-foreground-muted font-light leading-relaxed max-w-3xl mb-12">
+          Real-time monitoring and analytics across your entire vendor network.
+          Continuous financial health monitoring, risk assessment, and compliance tracking.
+        </p>
+      </Section>
+
+      {/* GOVERNANCE SECTION */}
+      <Section id="governance" className="py-24 scroll-mt-20">
         <div className="mb-12">
           <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
             Institutional <span className="text-foreground/30 italic">Governance.</span>
@@ -367,6 +395,39 @@ export default function NexusCanonLanding() {
         </div>
       </Section>
 
+      {/* SECURITY SECTION */}
+      <Section id="security" className="py-24 scroll-mt-20">
+        <div className="mb-12">
+          <h2 className="text-4xl md:text-6xl font-serif leading-[1.1] mb-4 text-foreground">
+            Security <span className="text-foreground/30 italic">First.</span>
+          </h2>
+          <div className="w-24 h-px bg-gradient-to-r from-foreground/40 to-transparent"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="border border-border bg-background-elevated/50 p-8">
+            <Lock className="w-8 h-8 text-foreground/80 mb-4 stroke-1" />
+            <h3 className="text-xl font-serif text-foreground mb-3">Zero-Trust Architecture</h3>
+            <p className="text-sm text-foreground-muted font-light leading-relaxed">
+              Every access request is verified, regardless of origin. No implicit trust assumptions.
+            </p>
+          </div>
+          <div className="border border-border bg-background-elevated/50 p-8">
+            <ShieldCheck className="w-8 h-8 text-foreground/80 mb-4 stroke-1" />
+            <h3 className="text-xl font-serif text-foreground mb-3">Compliance Certified</h3>
+            <p className="text-sm text-foreground-muted font-light leading-relaxed">
+              SOC 2 Type II, ISO 27001, GDPR compliant. Regular security audits and penetration testing.
+            </p>
+          </div>
+          <div className="border border-border bg-background-elevated/50 p-8">
+            <Fingerprint className="w-8 h-8 text-foreground/80 mb-4 stroke-1" />
+            <h3 className="text-xl font-serif text-foreground mb-3">Immutable Audit Trails</h3>
+            <p className="text-sm text-foreground-muted font-light leading-relaxed">
+              Blockchain-backed logs ensure complete transparency and non-repudiation of all actions.
+            </p>
+          </div>
+        </div>
+      </Section>
+
       {/* CTA SECTION */}
       <Section className="py-24">
         <div className="text-center">
@@ -415,9 +476,9 @@ export default function NexusCanonLanding() {
             <div className="pt-4 border-t border-border w-full flex flex-col md:flex-row justify-between items-center gap-2">
               <p className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest">© 2024 NexusCanon Governance Systems</p>
               <div className="flex gap-3">
-                <Link href="#privacy" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Privacy</Link>
-                <Link href="#terms" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Terms</Link>
-                <Link href="#security" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Security</Link>
+                <Link href="/privacy" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Privacy</Link>
+                <Link href="/terms" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Terms</Link>
+                <Link href="/security" className="text-[9px] font-brand text-foreground-subtle uppercase tracking-widest hover:text-foreground transition-colors">Security</Link>
               </div>
             </div>
           </div>

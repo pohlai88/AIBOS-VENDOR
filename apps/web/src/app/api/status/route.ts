@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logError } from "@/lib/logger";
 
+// Route segment config following Next.js 16 best practices
+// Status check should always be fresh
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = "nodejs";
 
 interface HealthCheck {
   status: "ok" | "degraded" | "down";
@@ -19,9 +22,9 @@ async function checkDatabase(): Promise<HealthCheck> {
   try {
     const supabase = await createClient();
     const { error } = await supabase.from("users").select("id").limit(1);
-    
+
     const responseTime = Date.now() - startTime;
-    
+
     if (error) {
       return {
         status: "down",
@@ -54,9 +57,9 @@ async function checkSupabase(): Promise<HealthCheck> {
     const supabase = await createClient();
     // Simple check - try to get current session
     const { error } = await supabase.auth.getSession();
-    
+
     const responseTime = Date.now() - startTime;
-    
+
     if (error && error.message !== "Invalid Refresh Token") {
       // Invalid refresh token is expected for unauthenticated requests
       return {
@@ -97,7 +100,7 @@ async function checkEmailService(): Promise<HealthCheck> {
 
     // Simple connectivity check (would make actual API call in production)
     const responseTime = Date.now() - startTime;
-    
+
     return {
       status: "ok",
       responseTime,
@@ -129,8 +132,8 @@ export async function GET() {
       database.status === "ok" && supabase.status === "ok" && email.status !== "down"
         ? "ok"
         : database.status === "down" || supabase.status === "down"
-        ? "down"
-        : "degraded";
+          ? "down"
+          : "degraded";
 
     return NextResponse.json(
       {

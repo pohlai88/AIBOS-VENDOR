@@ -67,9 +67,24 @@ export async function cleanupExpiredData(
         break;
 
       case "analytics":
-        // Analytics cleanup would depend on your analytics storage
-        // This is a placeholder
-        logInfo("Analytics cleanup not implemented", { resourceType, retentionDays });
+        // Clean up analytics data from user_activity_logs
+        // Analytics events are stored in user_activity_logs with event_type
+        const { count: analyticsCount, error: analyticsError } = await supabase
+          .from("user_activity_logs")
+          .delete({ count: "exact" })
+          .lt("created_at", cutoffDate.toISOString())
+          .in("event_type", ["page_view", "analytics_event", "user_action"]);
+
+        deleted = analyticsCount ?? 0;
+        if (analyticsError) {
+          error = analyticsError.message;
+        } else {
+          logInfo(`Cleaned up ${deleted} analytics records from user_activity_logs`, {
+            resourceType,
+            retentionDays,
+            cutoffDate: cutoffDate.toISOString(),
+          });
+        }
         break;
 
       case "documents":

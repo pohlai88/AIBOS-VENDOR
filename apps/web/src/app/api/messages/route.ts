@@ -6,9 +6,13 @@ import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { logError } from "@/lib/logger";
 import { validateRequest, messageCreateSchema } from "@/lib/validation";
 
-// Route segment config - messages are real-time, no caching
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
+// revalidate: 0 for real-time data (no cache)
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // Real-time data, no cache
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +27,7 @@ export async function GET(request: NextRequest) {
       let query = supabase
         .from("message_threads")
         .select("id, organization_id, vendor_id, subject, last_message_at, created_at, updated_at", { count: "exact" })
+        .eq("tenant_id", user.tenantId) // Explicit tenant filter
         .order("last_message_at", { ascending: false });
 
       if (user.role === "vendor") {
@@ -47,6 +52,7 @@ export async function GET(request: NextRequest) {
         .from("messages")
         .select("id, thread_id, sender_id, sender_organization_id, recipient_id, recipient_organization_id, content, read_at, created_at, updated_at, message_attachments(id, file_name, file_url, file_size, mime_type)", { count: "exact" })
         .eq("thread_id", threadId)
+        .eq("tenant_id", user.tenantId) // Explicit tenant filter
         .order("created_at", { ascending: true });
 
       if (error) {

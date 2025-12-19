@@ -4,6 +4,12 @@ import { deleteUserAccount } from "@/lib/gdpr";
 import { logError, logInfo } from "@/lib/logger";
 import { logDataModification } from "@/lib/audit-log";
 
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * POST /api/gdpr/delete - Delete user account (GDPR right to be forgotten)
  */

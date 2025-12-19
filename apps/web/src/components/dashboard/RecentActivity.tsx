@@ -2,14 +2,22 @@ import { Card } from "@aibos/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { formatDate } from "@aibos/shared";
+import { cache } from "react";
 
-async function fetchRecentActivity() {
+/**
+ * Server Component: RecentActivity
+ * Follows Next.js 16 best practices:
+ * - Direct database access
+ * - Parallel data fetching
+ * - Request memoization with cache()
+ */
+const fetchRecentActivity = cache(async () => {
   const user = await getCurrentUser();
   if (!user) return [];
 
   const supabase = await createClient();
 
-  // Fetch recent activities from different sources
+  // Fetch recent activities from different sources in parallel (best practice)
   const [recentDocuments, recentPayments, recentMessages] = await Promise.all([
     // Recent documents
     supabase

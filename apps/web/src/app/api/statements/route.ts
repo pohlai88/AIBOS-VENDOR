@@ -6,9 +6,12 @@ import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { validateRequest, statementCreateSchema } from "@/lib/validation";
 import { logError } from "@/lib/logger";
 
-// Route segment config for caching
+// Route segment config following Next.js 16 best practices
+// force-dynamic: Always render on request (authenticated route)
+// nodejs runtime: Required for Supabase client (Node.js library)
 export const dynamic = "force-dynamic";
 export const revalidate = 300; // 5 minutes for statements
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +26,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("statements")
       .select("id, organization_id, vendor_id, period_start, period_end, balance, currency, is_shared, created_at, updated_at, transactions(id, type, amount, description, date, reference)", { count: "exact" })
+      .eq("tenant_id", user.tenantId) // Explicit tenant filter
       .order("period_start", { ascending: false });
 
     // Apply filters based on user role and access
@@ -34,7 +38,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Company users can see all statements in their org + vendor statements
       query = query.or(
-        `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active)`
+        `organization_id.eq.${user.organizationId},vendor_id.in.(select vendor_id from vendor_relationships where company_id.eq.${user.organizationId} and status.eq.active and tenant_id.eq.${user.tenantId})`
       );
     }
 
@@ -98,6 +102,7 @@ export async function POST(request: NextRequest) {
       .from("statements")
       .insert({
         organization_id: user.organizationId,
+        tenant_id: user.tenantId, // Required for multi-tenant
         vendor_id: validatedBody.vendorId || null,
         period_start: validatedBody.periodStart,
         period_end: validatedBody.periodEnd,

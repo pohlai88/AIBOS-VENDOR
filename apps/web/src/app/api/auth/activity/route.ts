@@ -4,6 +4,10 @@ import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { requireAuth } from "@/lib/auth";
 import { logError } from "@/lib/logger";
 
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -42,6 +46,13 @@ export async function GET(request: NextRequest) {
       activities,
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Auth Activity API Error]", error, {
+      path: "/api/auth/activity",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Failed to get activity"),
+      500,
+      "ACTIVITY_ERROR"
+    );
   }
 }

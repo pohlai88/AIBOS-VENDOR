@@ -5,6 +5,10 @@ import { validateRequest, profileUpdateSchema } from "@/lib/validation";
 import { requireAuth } from "@/lib/auth";
 import { logError } from "@/lib/logger";
 
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -50,6 +54,13 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Auth Profile API Error]", error, {
+      path: "/api/auth/profile",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Profile update failed"),
+      500,
+      "PROFILE_UPDATE_ERROR"
+    );
   }
 }

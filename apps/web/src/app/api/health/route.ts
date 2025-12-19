@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
+// Route segment config following Next.js 16 best practices
+// Health check should always be fresh
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = "nodejs";
 
 /**
  * GET /api/health - Simple health check endpoint

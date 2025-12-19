@@ -1,27 +1,18 @@
 import { Suspense } from "react";
 import { DashboardStatsSkeleton } from "./DashboardStatsSkeleton";
 import { DashboardStatsClient } from "./DashboardStatsClient";
-import { getAppUrl } from "@/lib/env";
-import type { DashboardStatsResponse } from "@/types/api";
+import { getDashboardStats } from "@/lib/data-fetching";
 
-async function fetchDashboardStats(): Promise<DashboardStatsResponse> {
-  const response = await fetch(`${getAppUrl()}/api/dashboard/stats`, {
-    next: {
-      revalidate: 60, // Revalidate every 60 seconds
-      tags: ["dashboard-stats"],
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch dashboard stats");
-  }
-
-  const data = await response.json();
-  return data;
-}
-
+/**
+ * Server Component: DashboardStats
+ * Follows Next.js 16 best practices:
+ * - Direct database access (no API route call)
+ * - Parallel data fetching
+ * - Proper Suspense boundaries
+ */
 async function DashboardStatsContent() {
-  const stats = await fetchDashboardStats();
+  // Use direct database access with parallel fetching (best practice)
+  const stats = await getDashboardStats();
 
   return <DashboardStatsClient initialStats={stats} />;
 }

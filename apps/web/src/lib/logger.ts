@@ -95,35 +95,119 @@ class Logger {
   }
 
   private async shipToCloudWatch(logs: LogEntry[]): Promise<void> {
-    // Placeholder for CloudWatch integration
-    // Would use AWS SDK to send logs
-    // @aws-sdk/client-cloudwatch-logs
+    // CloudWatch Logs integration
+    // 
+    // To enable CloudWatch logging:
+    // 1. Install: npm install @aws-sdk/client-cloudwatch-logs
+    // 2. Set environment variables:
+    //    - AWS_CLOUDWATCH_LOG_GROUP (required)
+    //    - AWS_REGION (required)
+    //    - AWS_ACCESS_KEY_ID (required)
+    //    - AWS_SECRET_ACCESS_KEY (required)
+    // 3. Uncomment and configure the code below
+
     try {
-      // In production, this would send logs to CloudWatch
-      if (process.env.NODE_ENV === "development") {
-        console.debug(`[CloudWatch] Would ship ${logs.length} log entries`);
+      const logGroupName = process.env.AWS_CLOUDWATCH_LOG_GROUP;
+      const region = process.env.AWS_REGION || "us-east-1";
+
+      if (!logGroupName) {
+        if (process.env.NODE_ENV === "development") {
+          console.debug(`[CloudWatch] Log group not configured, skipping ${logs.length} log entries`);
+        }
+        return;
       }
+
+      const { CloudWatchLogsClient, PutLogEventsCommand } = await import("@aws-sdk/client-cloudwatch-logs");
+
+      const client = new CloudWatchLogsClient({ region });
+
+      const logStreamName = `app-logs-${new Date().toISOString().split('T')[0]}`;
+
+      // Convert logs to CloudWatch format
+      const logEvents = logs.map(log => ({
+        timestamp: new Date(log.timestamp).getTime(),
+        message: JSON.stringify({
+          level: log.level,
+          message: log.message,
+          context: log.context,
+          error: log.error,
+        }),
+      }));
+
+      const command = new PutLogEventsCommand({
+        logGroupName,
+        logStreamName,
+        logEvents,
+      });
+
+      await client.send(command);
     } catch (error) {
       console.error("Failed to ship logs to CloudWatch:", error);
+      // Don't throw - logging failures shouldn't break the application
     }
   }
 
   private async shipToDatadog(logs: LogEntry[]): Promise<void> {
-    // Placeholder for Datadog integration
-    // Would use Datadog API to send logs
+    // Datadog Logs API integration
+    //
+    // To enable Datadog logging:
+    // 1. Set environment variables:
+    //    - DATADOG_API_KEY (required)
+    //    - DATADOG_SITE (optional, defaults to datadoghq.com)
+    // 2. Uncomment and configure the code below
+
     try {
+      const apiKey = process.env.DATADOG_API_KEY;
+      const site = process.env.DATADOG_SITE || "datadoghq.com";
+
+      if (!apiKey) {
+        if (process.env.NODE_ENV === "development") {
+          console.debug(`[Datadog] API key not configured, skipping ${logs.length} log entries`);
+        }
+        return;
+      }
+
+      // Convert logs to Datadog format
+      const datadogLogs = logs.map(log => ({
+        ddsource: "nodejs",
+        ddtags: `env:${process.env.NODE_ENV || "development"},level:${log.level}`,
+        hostname: process.env.HOSTNAME || "unknown",
+        message: log.message,
+        service: "nexuscanon-vendor-portal",
+        status: log.level === "error" ? "error" : log.level === "warn" ? "warn" : "info",
+        timestamp: new Date(log.timestamp).getTime(),
+        ...(log.context && { attributes: log.context }),
+        ...(log.error && { error: log.error }),
+      }));
+
+      // Send logs to Datadog Logs API
+      const response = await fetch(`https://http-intake.logs.${site}/api/v2/logs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "DD-API-KEY": apiKey,
+        },
+        body: JSON.stringify(datadogLogs),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Datadog API error: ${response.status} ${errorText}`);
+      }
+
       if (process.env.NODE_ENV === "development") {
-        console.debug(`[Datadog] Would ship ${logs.length} log entries`);
+        console.debug(`[Datadog] Shipped ${logs.length} log entries successfully`);
       }
     } catch (error) {
       console.error("Failed to ship logs to Datadog:", error);
+      // Don't throw - logging failures shouldn't break the application
     }
   }
 
   private async shipToLogRocket(logs: LogEntry[]): Promise<void> {
     // LogRocket is client-side only
     if (typeof window === "undefined") return;
-    
+
     try {
       // LogRocket would be initialized separately
       // This is just for structured log shipping

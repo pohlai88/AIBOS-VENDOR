@@ -3,6 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/auth";
 import { createErrorResponse, createSuccessResponse } from "@/lib/errors";
 import { validateRequest, threadCreateSchema } from "@/lib/validation";
+import { logError } from "@/lib/logger";
+
+// Route segment config following Next.js 16 best practices
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,7 +63,14 @@ export async function POST(request: NextRequest) {
 
     return createSuccessResponse({ thread });
   } catch (error) {
-    return createErrorResponse(error);
+    logError("[Messages Threads API POST Error]", error, {
+      path: "/api/messages/threads",
+    });
+    return createErrorResponse(
+      error instanceof Error ? error : new Error("Failed to create thread"),
+      500,
+      "THREAD_CREATE_ERROR"
+    );
   }
 }
 
