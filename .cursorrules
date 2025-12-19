@@ -1,0 +1,138 @@
+# Cursor Rules - AI-BOS Vendor Workspace
+
+## Core Principles
+
+1. **No Unnecessary Documents**: Do not create documentation files (*.md, *.txt, etc.) unless explicitly requested by the user
+2. **Mutual Agreement Required**: Never change, move, or alter files without explicit user agreement
+3. **Specification Adherence**: Only modify code according to agreed specifications
+4. **Directory Permissions**: Respect allowed/forbidden directory rules
+
+## Directory Rules
+
+### ✅ ALLOWED Directories (Safe to Modify)
+
+#### Source Code Directories
+- `apps/web/src/app/**` - Application pages and routes
+- `apps/web/src/components/**` - React components
+- `apps/web/src/lib/**` - Utility libraries and helpers
+- `apps/web/src/hooks/**` - React hooks
+- `apps/web/src/types/**` - TypeScript type definitions
+- `apps/web/src/middleware.ts` - Next.js middleware
+
+#### Configuration Files (Modify Only When Requested)
+- `apps/web/tailwind.config.js` - Tailwind configuration
+- `apps/web/next.config.js` - Next.js configuration
+- `apps/web/tsconfig.json` - TypeScript configuration
+- `apps/web/postcss.config.js` - PostCSS configuration
+
+#### Styling
+- `apps/web/src/app/globals.css` - Global styles
+
+### ❌ FORBIDDEN Directories (Do Not Modify Without Explicit Permission)
+
+#### Landing Page - STRICTLY PROTECTED
+- `apps/web/src/app/page.tsx` - **MAIN LANDING PAGE - DO NOT MODIFY WITHOUT EXPLICIT APPROVAL**
+- `apps/web/src/app/landing/**` - Landing page variants - **DO NOT MODIFY WITHOUT EXPLICIT APPROVAL**
+
+#### Build & Generated Files
+- `apps/web/.next/**` - Next.js build output (auto-generated)
+- `apps/web/node_modules/**` - Dependencies (auto-managed)
+- `apps/web/.env*` - Environment files (sensitive)
+
+#### Documentation (Create Only When Explicitly Requested)
+- `apps/web/**/*.md` - Markdown documentation files (DO NOT CREATE)
+- All documentation should be in `docs/` directory with proper naming conventions
+- Design docs: `docs/design/`
+- Navigation/docs: `docs/`
+
+#### Test Files (Modify Only When Testing is Requested)
+- `apps/web/e2e/**` - End-to-end tests
+- `apps/web/src/__tests__/**` - Unit tests
+- `apps/web/jest.config.js` - Jest configuration
+- `apps/web/playwright.config.ts` - Playwright configuration
+
+#### Public Assets (Modify Only When Requested)
+- `apps/web/public/**` - Static assets (icons, manifests, etc.)
+
+#### API Documentation
+- `apps/web/src/app/api/v1/README.md` - API documentation
+
+## File Modification Rules
+
+### Before Making Any Changes
+
+1. **Always Ask First**: If unsure about modifying a file, ask the user
+2. **Check Context**: Read the file first to understand its purpose
+3. **Preserve Intent**: Maintain the original design intent and structure
+4. **No Surprises**: Never delete, rename, or move files without explicit permission
+
+### Landing Page Protection
+
+**CRITICAL**: The landing page (`apps/web/src/app/page.tsx`) is PROTECTED:
+- **DO NOT** modify, change, or alter the landing page without explicit user approval
+- **DO NOT** add, remove, or change any elements on the landing page
+- **DO NOT** modify spacing, colors, fonts, or layout without approval
+- **ALWAYS** ask before making ANY changes to the landing page
+- This includes: navigation, hero section, features, CTA, footer - ALL sections are protected
+
+### Code Changes
+
+1. **Follow Existing Patterns**: Match the code style and patterns already in use
+2. **Respect Design System**: Use design tokens and components from the design system
+3. **Type Safety**: Maintain TypeScript types and interfaces
+4. **No Breaking Changes**: Don't break existing functionality without agreement
+
+## Documentation Policy
+
+### Do NOT Create:
+- README files (unless explicitly requested)
+- Design proposals (unless explicitly requested)
+- Navigation maps (unless explicitly requested)
+- Architecture diagrams (unless explicitly requested)
+- Comment-only documentation files
+
+### Documentation Locations:
+- Design proposals: `docs/design/`
+- Navigation maps: `docs/`
+- Architecture docs: `docs/architecture/`
+- API docs: `docs/api/`
+
+## Workspace Cleanup Rules
+
+1. **No Temporary Files**: Don't create temporary or test files
+2. **No Backup Files**: Don't create `.bak`, `.old`, or backup copies
+3. **Clean Commits**: Only modify files that are part of the current task
+4. **Respect .gitignore**: Don't create files that should be ignored
+
+## Next.js MCP Usage
+
+- Use Next.js MCP tools for route discovery and debugging
+- `get_routes` - Discover routes dynamically
+- `get_errors` - Check for errors before making changes
+- Always verify routes exist before linking to them
+
+## Brand Guidelines
+
+1. **Typography**: Use `font-brand` (Inter) for all text, `font-normal` weight only
+2. **No Shadows**: Never add shadows to elements
+3. **No Bold**: Use `font-normal` instead of `font-bold`
+4. **Design Tokens**: Always use design system tokens (colors, spacing, etc.)
+5. **Grid System**: Respect the grid structure, no floating elements
+
+## Communication Protocol
+
+1. **Be Explicit**: Clearly state what you're about to change
+2. **Show Impact**: Explain what files will be affected
+3. **Wait for Approval**: Don't proceed with major changes without confirmation
+4. **Report Issues**: Immediately report any broken links or missing routes
+
+## Error Prevention
+
+1. **Verify Routes**: Check if routes exist before creating links
+2. **Check Imports**: Ensure all imports are valid
+3. **Test Assumptions**: Verify anchor sections exist before linking to them
+4. **No Placeholders**: Don't leave TODO comments or placeholder code
+
+---
+
+**Remember**: When in doubt, ask. Better to confirm than to assume.

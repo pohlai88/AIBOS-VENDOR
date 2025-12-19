@@ -1,0 +1,88 @@
+import type {
+  Document,
+  Payment,
+  Statement,
+  MessageThread,
+  Message,
+} from "@aibos/shared";
+
+// API Response Types
+export interface DocumentsResponse {
+  documents: Document[];
+}
+
+export interface DocumentResponse {
+  document: Document;
+}
+
+export interface PaymentsResponse {
+  payments: Payment[];
+}
+
+export interface PaymentResponse {
+  payment: Payment;
+}
+
+export interface StatementsResponse {
+  statements: Statement[];
+}
+
+export interface StatementResponse {
+  statement: Statement;
+}
+
+export interface MessagesResponse {
+  messages?: Message[];
+  threads?: MessageThread[];
+}
+
+export interface MessageResponse {
+  message: Message;
+}
+
+export interface ApiErrorResponse {
+  error: string;
+  code?: string;
+}
+
+export interface ApiSuccessResponse<T> {
+  data?: T;
+  [key: string]: unknown;
+}
+
+// CSV Export Types
+export interface CSVRow {
+  [key: string]: string | number | null;
+}
+
+// Supabase Cookie Options
+export interface CookieOptions {
+  name: string;
+  value: string;
+  options?: {
+    domain?: string;
+    expires?: Date;
+    httpOnly?: boolean;
+    maxAge?: number;
+    path?: string;
+    sameSite?: "strict" | "lax" | "none";
+    secure?: boolean;
+  };
+}
+
+// Dashboard Stats Response
+export interface DashboardStatsResponse {
+  documents?: {
+    count: number;
+  };
+  payments?: {
+    count: number;
+    total: number;
+  };
+  statements?: {
+    count: number;
+  };
+  messages?: {
+    unread: number;
+  };
+}
